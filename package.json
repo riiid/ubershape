@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "ubershape",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "license": "(MIT OR Apache-2.0)",
+  "workspaces": [
+    "ubershape"
+  ],
+  "scripts": {
+    "dev": "ultra -r dev",
+    "build": "ultra -r -b build"
+  },
+  "dependencies": {
+    "ultra-runner": "^3.5.0"
+  }
+}
