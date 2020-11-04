@@ -1,21 +1,20 @@
-import { createRecursiveDescentParser, RecursiveDescentParser, Span, Token } from './recursive-descent-parser';
-import { kebabCasePattern, parseWhitespace } from './shared';
+import { Def, Field, Table, Type, UbershapeAst, Union } from './ast';
+import { createRecursiveDescentParser, RecursiveDescentParser, Token } from './recursive-descent-parser';
+import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
-export type UbershapeAst = (Table | Union)[];
-
-export function parse(text: string) {
+export function parse(text: string): UbershapeAst {
   const parser = createRecursiveDescentParser(text);
-  const ast: UbershapeAst = [];
+  const defs: Def[] = [];
   while (true) {
     const comments = parseWhitespace(parser);
     const union = parseUnion(parser, comments);
     if (union) {
-      ast.push(union);
+      defs.push(union);
       continue;
     }
     const table = parseTable(parser, comments);
     if (table) {
-      ast.push(table);
+      defs.push(table);
       continue;
     }
     break;
@@ -23,11 +22,14 @@ export function parse(text: string) {
   if (parser.loc < text.length) {
     throw `unexpected "${text.substr(parser.loc, 10)}" at ${parser.loc}`;
   }
-  return ast;
+  return {
+    defs,
+  };
 }
 
 function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | undefined {
-  if (!parser.accept('union')) return;
+  const keyword = parser.accept('union');
+  if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
   const types: Type[] = [];
@@ -39,12 +41,12 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
       break;
     }
     parseWhitespace(parser);
-    const type = parseType(parser);
+    const type = parseType(parser, true);
     types.push(type);
   }
   return {
     kind: 'union',
-    start: name.start,
+    start: keyword.start,
     end: (types[types.length - 1] ?? name).end,
     comments,
     name,
@@ -53,7 +55,8 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
 }
 
 function parseTable(parser: RecursiveDescentParser, comments: Token[]): Table | undefined {
-  if (!parser.accept('table')) return;
+  const keyword = parser.accept('table');
+  if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
   const fields: Field[] = [];
@@ -66,7 +69,7 @@ function parseTable(parser: RecursiveDescentParser, comments: Token[]): Table | 
     parseWhitespace(parser);
     parser.expect(':');
     parseWhitespace(parser);
-    const type = parseType(parser);
+    const type = parseType(parser, true);
     fields.push({
       start: name.start,
       end: type.end,
@@ -78,60 +81,10 @@ function parseTable(parser: RecursiveDescentParser, comments: Token[]): Table | 
   const closeBracket = parser.expect('}');
   return {
     kind: 'table',
-    start: name.start,
+    start: keyword.start,
     end: closeBracket.end,
     comments,
     name,
     fields,
   };
-}
-
-function parseType(parser: RecursiveDescentParser): Type {
-  const type = parser.expect(kebabCasePattern);
-  parseWhitespace(parser);
-  const multipleStart = parser.accept('[');
-  if (multipleStart) {
-    parseWhitespace(parser);
-    const multipleEnd = parser.expect(']');
-    return {
-      start: type.start,
-      end: multipleEnd.end,
-      type,
-      multiple: true,
-    };
-  } else {
-    return {
-      start: type.start,
-      end: type.end,
-      type,
-      multiple: false,
-    };
-  }
-}
-
-export interface Def<T> extends Span {
-  kind: T;
-}
-
-export interface Table extends Def<'table'> {
-  comments: Token[];
-  name: Token;
-  fields: Field[];
-}
-
-export interface Field extends Span {
-  comments: Token[];
-  name: Token;
-  type: Type;
-}
-
-export interface Union extends Def<'union'> {
-  comments: Token[];
-  name: Token;
-  types: Type[];
-}
-
-export interface Type extends Span {
-  type: Token;
-  multiple: boolean;
 }
