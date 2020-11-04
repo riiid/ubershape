@@ -14,11 +14,11 @@ export interface Statement<T> extends Span {
 }
 
 export type Def =
-  | Table
+  | Record
   | Union
 ;
 
-export interface Table extends Statement<'table'> {
+export interface Record extends Statement<'record'> {
   comments: Token[];
   name: Token;
   fields: Field[];

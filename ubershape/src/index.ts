@@ -1,8 +1,8 @@
 import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
 
-// console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
-console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
+console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
+// console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
 
 function getUbershapeCode() {
   return `
@@ -16,7 +16,7 @@ function getUbershapeCode() {
       | table
       | image
 
-    table paragraph {
+    record paragraph {
       margin-top: number
       margin-bottom: number
       children: inline-element[]
@@ -25,7 +25,7 @@ function getUbershapeCode() {
     union inline-element
       | text
 
-    table text {
+    record text {
       value: string
       bold: boolean
       italic: boolean
@@ -33,7 +33,7 @@ function getUbershapeCode() {
       strike: boolean
     }
 
-    table image {
+    record image {
       width: number
       height: number
       src: string

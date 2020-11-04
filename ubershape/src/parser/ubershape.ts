@@ -1,4 +1,4 @@
-import { Def, Field, Table, Type, UbershapeAst, Union } from './ast';
+import { Def, Field, Record, Type, UbershapeAst, Union } from './ast';
 import { createRecursiveDescentParser, RecursiveDescentParser, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
@@ -12,9 +12,9 @@ export function parse(text: string): UbershapeAst {
       defs.push(union);
       continue;
     }
-    const table = parseTable(parser, comments);
-    if (table) {
-      defs.push(table);
+    const record = parseRecord(parser, comments);
+    if (record) {
+      defs.push(record);
       continue;
     }
     break;
@@ -54,8 +54,8 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
   };
 }
 
-function parseTable(parser: RecursiveDescentParser, comments: Token[]): Table | undefined {
-  const keyword = parser.accept('table');
+function parseRecord(parser: RecursiveDescentParser, comments: Token[]): Record | undefined {
+  const keyword = parser.accept('record');
   if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
@@ -80,7 +80,7 @@ function parseTable(parser: RecursiveDescentParser, comments: Token[]): Table | 
   }
   const closeBracket = parser.expect('}');
   return {
-    kind: 'table',
+    kind: 'record',
     start: keyword.start,
     end: closeBracket.end,
     comments,
