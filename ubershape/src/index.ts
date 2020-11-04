@@ -1,6 +1,8 @@
-import { parse } from './parser/ubershape';
+import { parse as parseUbershape } from './parser/ubershape';
+import { parse as parseSubshape } from './parser/subshape';
 
-console.log(JSON.stringify(parse(getUbershapeCode()), null, 2));
+// console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
+console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
 
 function getUbershapeCode() {
   return `

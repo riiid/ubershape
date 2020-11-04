@@ -38,7 +38,7 @@ function parseUse(parser: RecursiveDescentParser, comments: Token[]): Use {
 }
 
 function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select | undefined {
-  const keyword = parser.expect('select');
+  const keyword = parser.accept('select');
   if (!keyword) return;
   parseWhitespace(parser);
   const typeName = parser.expect(kebabCasePattern);

@@ -1,5 +1,7 @@
 export interface RecursiveDescentParser {
   loc: number;
+  offsetToColRow: (offset: number) => ColRow;
+  getAroundText: (loc: number, length?: number, window?: number) => string;
   accept(pattern: string | RegExp): Token | undefined;
   expect(pattern: string | RegExp): Token;
 }
@@ -10,6 +12,10 @@ export interface Span {
   start: number;
   end: number;
 }
+export interface ColRow {
+  col: number;
+  row: number;
+}
 export interface Token extends Span {
   text: string;
 }
@@ -19,9 +25,17 @@ export function createRecursiveDescentParser(
 ): RecursiveDescentParser {
   const debug = !!config?.debug;
   let cnt = 0;
+  const lines = input.split('\n');
   const parser: RecursiveDescentParser = {
     loc: 0,
-    accept(pattern: string | RegExp) {
+    offsetToColRow: offset => offsetToColRow(lines, offset),
+    getAroundText: (loc, length, window) => getAroundText(
+      lines,
+      loc,
+      length,
+      window
+    ),
+    accept(pattern) {
       cnt++;
       if (cnt > input.length * 5) throw `infinite loop`;
       if (typeof pattern === 'string') {
@@ -30,10 +44,14 @@ export function createRecursiveDescentParser(
         return acceptRegex(pattern);
       }
     },
-    expect(pattern: string | RegExp) {
+    expect(pattern) {
       const result = parser.accept(pattern);
       if (result == null) {
-        throw `unexpected "${input.substr(parser.loc, 10)}" at ${parser.loc}`;
+        const colRow = parser.offsetToColRow(parser.loc);
+        throw (
+          `expected "${pattern}" at ${colRow.row + 1}:${colRow.col + 1}\n` +
+          parser.getAroundText(parser.loc)
+        );
       } else {
         return result;
       }
@@ -60,4 +78,54 @@ export function createRecursiveDescentParser(
     return { start, end, text };
   }
   return parser;
+}
+
+function offsetToColRow(lines: string[], offset: number) {
+  let col = offset;
+  let row = 0;
+  for (const line of lines) {
+    const len = line.length + 1;
+    if (len < col) {
+      col -= len;
+      row++;
+      continue;
+    }
+    return { col, row };
+  }
+  return { col: 0, row };
+}
+
+function getAroundText(
+  lines: string[],
+  loc: number,
+  length: number = 1,
+  window: number = 5
+) {
+  const colRow = offsetToColRow(lines, loc);
+  const headCount = Math.min(1, (window >> 1) + (window % 2));
+  const tailCount = window >> 1;
+  const headStart = Math.max(0, colRow.row - headCount - 1);
+  const headEnd = colRow.row + 1;
+  const tailStart = colRow.row + 1;
+  const tailEnd = colRow.row + tailCount + 1;
+  const heads = lines.slice(headStart, headEnd);
+  const tails = lines.slice(tailStart, tailEnd);
+  const lineNumberDigitCount = tailEnd.toString().length;
+  const headTexts = heads.map((line, index) => {
+    const lineNumber = index + headStart + 1;
+    const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
+    return lineNumberText + ' | ' + line + '\n';
+  }).join('');
+  const tailTexts = tails.map((line, index) => {
+    const lineNumber = index + tailStart + 1;
+    const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
+    return lineNumberText + ' | ' + line + '\n';
+  }).join('');
+  return (
+    headTexts +
+    (new Array(lineNumberDigitCount + 1 + 1)).join(' ') + ' | ' +
+    (new Array(colRow.col + 1)).join(' ') +
+    (new Array(length + 1)).join('^') + '\n' +
+    tailTexts
+  );
 }
