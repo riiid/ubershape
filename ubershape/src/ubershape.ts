@@ -4,7 +4,13 @@ import { primitiveTypeNames } from './primitive';
 
 export function validateUbershape(ast: UbershapeAst): Error[] {
   const result: Error[] = [];
+  const memo: { [key: string]: boolean } = {};
   for (const def of ast.defs) {
+    if (memo[def.name.text]) {
+      result.push(new UbershapeDuplicateDefError(def));
+    } else {
+      memo[def.name.text] = true;
+    }
     switch (def.kind) {
       case 'union': result.push(...validateUnion(ast, def)); break;
       case 'record': result.push(...validateRecord(ast, def)); break;
@@ -61,6 +67,12 @@ export function validateRecord(ast: UbershapeAst, record: Record): Error[] {
 }
 
 export class UbershapeEmptyDefError extends Error {
+  constructor(public def: Def) {
+    super();
+  }
+}
+
+export class UbershapeDuplicateDefError extends Error {
   constructor(public def: Def) {
     super();
   }
