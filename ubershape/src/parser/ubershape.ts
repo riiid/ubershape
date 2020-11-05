@@ -2,7 +2,11 @@ import { Def, Field, Record, Type, UbershapeAst, Union } from './ast';
 import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
-export function parse(text: string): UbershapeAst {
+export interface ParseResult {
+  ast: UbershapeAst;
+  parser: RecursiveDescentParser;
+}
+export function parse(text: string): ParseResult {
   const parser = createRecursiveDescentParser(text);
   const defs: Def[] = [];
   while (true) {
@@ -21,7 +25,10 @@ export function parse(text: string): UbershapeAst {
   }
   parser.expect(eof);
   return {
-    defs,
+    ast: {
+      defs,
+    },
+    parser,
   };
 }
 

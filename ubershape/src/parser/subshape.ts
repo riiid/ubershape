@@ -2,7 +2,11 @@ import { FieldSelector, Select, SelectRecord, SelectUnion, SubshapeAst, TypeSele
 import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
-export function parse(text: string): SubshapeAst {
+export interface ParseResult {
+  ast: SubshapeAst;
+  parser: RecursiveDescentParser;
+}
+export function parse(text: string): ParseResult {
   const parser = createRecursiveDescentParser(text);
   const comments = parseWhitespace(parser);
   const use = parseUse(parser, comments);
@@ -15,8 +19,11 @@ export function parse(text: string): SubshapeAst {
   }
   parser.expect(eof);
   return {
-    use,
-    selects,
+    ast: {
+      use,
+      selects,
+    },
+    parser,
   };
 }
 

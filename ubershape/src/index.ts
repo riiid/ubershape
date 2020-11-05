@@ -1,10 +1,29 @@
 import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
 import { SyntaxError } from './parser/recursive-descent-parser';
+import { UbershapeReferenceError, validateUbershape } from './ubershape';
 
 try {
-  // console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
-  console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
+  const ubershapeParseResult = parseUbershape(getUbershapeCode());
+  const ubershapeAst = ubershapeParseResult.ast;
+  const ubershapeErrors = validateUbershape(ubershapeAst);
+  for (const error of ubershapeErrors) {
+    if (error instanceof UbershapeReferenceError) {
+      console.error(error.type.type.text + ' is not defined\n');
+      console.error(
+        ubershapeParseResult.parser.getAroundText(
+          error.type.start,
+          error.type.end - error.type.start
+        )
+      );
+    } else {
+      console.error(error);
+    }
+  }
+  const subshapeParseResult = parseSubshape(getSubshapeCode());
+  const subshapeAst = subshapeParseResult.ast;
+  // console.log(JSON.stringify(ubershapeAst, null, 2));
+  // console.log(JSON.stringify(subshapeAst, null, 2));
 } catch (err) {
   if (err instanceof SyntaxError) {
     console.error(err.toString());
