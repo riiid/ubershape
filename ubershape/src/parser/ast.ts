@@ -41,15 +41,31 @@ export interface Type extends Span {
   multiple: boolean;
 }
 
-export type Fragment = Type;
-
 export interface Use extends Statement<'use'> {
   comments: Token[];
   ubershapePath: Token;
 }
 
-export interface Select extends Statement<'select'> {
+export type Select =
+  | SelectRecord
+  | SelectUnion
+;
+
+export interface SelectRecord extends Statement<'select-record'> {
   comments: Token[];
   typeName: Token;
-  fragments: Fragment[];
+  fieldSelectors: FieldSelector[];
 }
+
+export interface SelectUnion extends Statement<'select-union'> {
+  comments: Token[];
+  typeName: Token;
+  typeSelectors: TypeSelector[];
+}
+
+export interface FieldSelector extends Span {
+  comments: Token[];
+  fieldName: Token;
+}
+
+export type TypeSelector = Type;

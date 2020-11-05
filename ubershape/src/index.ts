@@ -1,8 +1,8 @@
 import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
 
-console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
-// console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
+// console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
+console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
 
 function getUbershapeCode() {
   return `
@@ -45,12 +45,15 @@ function getSubshapeCode() {
   return `
     use './riiid-rich-text.ubershape'
 
-    select document {
-      block-element[]
-      block-element
-    }
+    select union document
+      | block-element[]
+      | block-element
 
-    select paragraph {
+    select some document
+      | block-element[]
+      | block-element
+
+    select record paragraph {
       children
     }
   `;
