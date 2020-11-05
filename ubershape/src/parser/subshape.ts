@@ -1,5 +1,5 @@
 import { FieldSelector, Select, SelectRecord, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
-import { createRecursiveDescentParser, RecursiveDescentParser, Token } from './recursive-descent-parser';
+import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
 export function parse(text: string): SubshapeAst {
@@ -13,9 +13,7 @@ export function parse(text: string): SubshapeAst {
     if (!select) break;
     selects.push(select);
   }
-  if (parser.loc < text.length) {
-    throw `unexpected "${text.substr(parser.loc, 10)}" at ${parser.loc}`;
-  }
+  parser.expect(eof);
   return {
     use,
     selects,
@@ -45,7 +43,7 @@ function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select 
   if (selectUnion) return selectUnion;
   const selectRecord = parseSelectRecord(parser, comments);
   if (selectRecord) return selectRecord;
-  throw 'expected union or record';
+  throw new SyntaxError(parser, ['union', 'record'], [kebabCasePattern]);
 }
 
 function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): SelectUnion | undefined {

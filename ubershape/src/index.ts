@@ -1,8 +1,17 @@
 import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
+import { SyntaxError } from './parser/recursive-descent-parser';
 
-// console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
-console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
+try {
+  // console.log(JSON.stringify(parseUbershape(getUbershapeCode()), null, 2));
+  console.log(JSON.stringify(parseSubshape(getSubshapeCode()), null, 2));
+} catch (err) {
+  if (err instanceof SyntaxError) {
+    console.error(err.toString());
+  } else {
+    throw err;
+  }
+}
 
 function getUbershapeCode() {
   return `

@@ -1,5 +1,5 @@
 import { Def, Field, Record, Type, UbershapeAst, Union } from './ast';
-import { createRecursiveDescentParser, RecursiveDescentParser, Token } from './recursive-descent-parser';
+import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
 export function parse(text: string): UbershapeAst {
@@ -19,9 +19,7 @@ export function parse(text: string): UbershapeAst {
     }
     break;
   }
-  if (parser.loc < text.length) {
-    throw `unexpected "${text.substr(parser.loc, 10)}" at ${parser.loc}`;
-  }
+  parser.expect(eof);
   return {
     defs,
   };
