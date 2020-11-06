@@ -2,6 +2,28 @@ import { DeepPartial } from '../misc/type';
 import { Field, Record, Type, Union } from './ast';
 import { parse } from './ubershape';
 
+test('root 1', () => {
+  parse(`
+    root
+  `);
+});
+
+test('root 2', () => {
+  parse(`
+    root
+      > foo
+  `);
+});
+
+test('root 3', () => {
+  parse(`
+    root
+      > foo
+      > bar
+      > baz
+  `);
+});
+
 test('record 1', () => {
   parse(`
     record foo {}
@@ -24,11 +46,11 @@ test('record 3', () => {
       c: string
     }
   `);
-  const firstDef = result.ast.defs[0];
+  const firstDef = result.ast.defs[0] as Record;
   expect(firstDef.kind).toBe('record');
   expect(firstDef.name.text).toBe('foo');
-  expect((firstDef as Record).fields.length).toBe(3);
-  const fields = (firstDef as Record).fields;
+  expect(firstDef.fields.length).toBe(3);
+  const fields = firstDef.fields;
   expect(fields).toMatchObject<DeepPartial<Field>[]>([
     { name: { text: 'a', }, type: { type: { text: 'boolean', } } },
     { name: { text: 'b', }, type: { type: { text: 'number', } } },
@@ -56,10 +78,10 @@ test('union 3', () => {
       | number
       | string
   `);
-  const firstDef = result.ast.defs[0];
+  const firstDef = result.ast.defs[0] as Union;
   expect(firstDef.kind).toBe('union');
   expect(firstDef.name.text).toBe('foo');
-  const types = (firstDef as Union).types;
+  const types = firstDef.types;
   expect(types).toMatchObject<DeepPartial<Type>[]>([
     { type: { text: 'boolean' } },
     { type: { text: 'number' } },

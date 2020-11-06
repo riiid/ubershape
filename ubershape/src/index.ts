@@ -34,10 +34,10 @@ try {
 
 function getUbershapeCode() {
   return `
-    union document
-      | section[]
-      | block-element[]
-      | block-element
+    root
+      > section[]
+      > block-element[]
+      > block-element
 
     union block-element
       | paragraph
@@ -73,9 +73,9 @@ function getSubshapeCode() {
   return `
     use './riiid-rich-text.ubershape'
 
-    select union document
-      | block-element[]
-      | block-element
+    select root
+      > block-element[]
+      > block-element
 
     select some document
       | block-element[]

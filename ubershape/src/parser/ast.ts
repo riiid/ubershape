@@ -14,9 +14,15 @@ export interface Statement<T> extends Span {
 }
 
 export type Def =
+  | Root
   | Record
   | Union
 ;
+
+export interface Root extends Statement<'root'> {
+  comments: Token[];
+  types: Type[];
+}
 
 export interface Record extends Statement<'record'> {
   comments: Token[];
@@ -47,9 +53,15 @@ export interface Use extends Statement<'use'> {
 }
 
 export type Select =
+  | SelectRoot
   | SelectRecord
   | SelectUnion
 ;
+
+export interface SelectRoot extends Statement<'select-root'> {
+  comments: Token[];
+  typeSelectors: TypeSelector[];
+}
 
 export interface SelectRecord extends Statement<'select-record'> {
   comments: Token[];
