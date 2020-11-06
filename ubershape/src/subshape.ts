@@ -1,6 +1,6 @@
 import { Def, FieldSelector, Select, SubshapeAst, TypeSelector, UbershapeAst } from './parser/ast';
 import { Span } from './parser/recursive-descent-parser';
-import { findDefByType } from './ubershape';
+import { findDefByType, getRoot, UbershapeRootNotExistError } from './ubershape';
 
 export function applySubshape(
   ubershapeAst: UbershapeAst,
@@ -8,6 +8,22 @@ export function applySubshape(
 ): UbershapeAst {
   const usedSet: Set<Span> = new Set();
   for (const select of subshapeAst.selects) {
+    if (select.kind === 'select-root') {
+      const root = getRoot(ubershapeAst);
+      if (!root) throw new UbershapeRootNotExistError();
+      usedSet.add(root);
+      for (const typeSelector of select.typeSelectors) {
+        const type = root.types.find(type => {
+          return (
+            (type.type.text === typeSelector.type.text) &&
+            (type.multiple === typeSelector.multiple)
+          );
+        });
+        if (!type) throw new SubshapeTypeSelectorReferenceError(root, typeSelector);
+        usedSet.add(type);
+      }
+      continue;
+    }
     const def = findDefByType(ubershapeAst, select.typeName.text);
     if (!def) throw new SubshapeSelectReferenceError(select);
     usedSet.add(def);
@@ -41,6 +57,11 @@ export function applySubshape(
       def => usedSet.has(def)
     ).map(def => {
       switch (def.kind) {
+        case 'root':
+          return {
+            ...def,
+            types: def.types.filter(type => usedSet.has(type)),
+          };
         case 'record':
           return {
             ...def,
