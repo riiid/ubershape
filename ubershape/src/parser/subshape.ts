@@ -52,9 +52,8 @@ function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select 
   if (selectUnion) return selectUnion;
   const selectRecord = parseSelectRecord(parser, comments);
   if (selectRecord) return selectRecord;
-  throw new SyntaxError(parser, ['union', 'record'], [kebabCasePattern]);
+  throw new SyntaxError(parser, ['root', 'union', 'record'], [kebabCasePattern]);
 }
-
 
 function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): SelectRoot | undefined {
   const keyword = parser.accept('root');
