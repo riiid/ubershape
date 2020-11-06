@@ -1,4 +1,4 @@
-import { Def, Field, Record, Type, UbershapeAst, Union } from './ast';
+import { Def, Field, Record, Root, Type, UbershapeAst, Union } from './ast';
 import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
@@ -11,6 +11,11 @@ export function parse(text: string): ParseResult {
   const defs: Def[] = [];
   while (true) {
     const comments = parseWhitespace(parser);
+    const root = parseRoot(parser, comments);
+    if (root) {
+      defs.push(root);
+      continue;
+    }
     const union = parseUnion(parser, comments);
     if (union) {
       defs.push(union);
@@ -29,6 +34,30 @@ export function parse(text: string): ParseResult {
       defs,
     },
     parser,
+  };
+}
+
+function parseRoot(parser: RecursiveDescentParser, comments: Token[]): Root | undefined {
+  const keyword = parser.accept('root');
+  if (!keyword) return;
+  const types: Type[] = [];
+  while (true) {
+    const loc = parser.loc;
+    parseWhitespace(parser);
+    if (!parser.accept('>')) {
+      parser.loc = loc;
+      break;
+    }
+    parseWhitespace(parser);
+    const type = parseType(parser, true);
+    types.push(type);
+  }
+  return {
+    kind: 'root',
+    start: keyword.start,
+    end: (types[types.length - 1] ?? keyword).end,
+    comments,
+    types,
   };
 }
 
