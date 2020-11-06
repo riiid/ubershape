@@ -1,4 +1,4 @@
-import { FieldSelector, Select, SelectRecord, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
+import { FieldSelector, Select, SelectRecord, SelectRoot, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
 import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
@@ -46,11 +46,38 @@ function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select 
   const keyword = parser.accept('select');
   if (!keyword) return;
   parseWhitespace(parser);
+  const selectRoot = parseSelectRoot(parser, comments);
+  if (selectRoot) return selectRoot;
   const selectUnion = parseSelectUnion(parser, comments);
   if (selectUnion) return selectUnion;
   const selectRecord = parseSelectRecord(parser, comments);
   if (selectRecord) return selectRecord;
   throw new SyntaxError(parser, ['union', 'record'], [kebabCasePattern]);
+}
+
+
+function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): SelectRoot | undefined {
+  const keyword = parser.accept('root');
+  if (!keyword) return;
+  const typeSelectors: TypeSelector[] = [];
+  while (true) {
+    const loc = parser.loc;
+    parseWhitespace(parser);
+    if (!parser.accept('>')) {
+      parser.loc = loc;
+      break;
+    }
+    parseWhitespace(parser);
+    const typeSelector = parseType(parser, true);
+    typeSelectors.push(typeSelector);
+  }
+  return {
+    kind: 'select-root',
+    start: keyword.start,
+    end: (typeSelectors[typeSelectors.length - 1] ?? keyword).end,
+    comments,
+    typeSelectors,
+  };
 }
 
 function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): SelectUnion | undefined {

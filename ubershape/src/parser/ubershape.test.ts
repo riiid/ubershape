@@ -1,5 +1,5 @@
 import { DeepPartial } from '../misc/type';
-import { Field, Record, Type, Union } from './ast';
+import { Field, Record, Root, Type, Union } from './ast';
 import { parse } from './ubershape';
 
 test('root 1', () => {
@@ -16,12 +16,19 @@ test('root 2', () => {
 });
 
 test('root 3', () => {
-  parse(`
+  const result = parse(`
     root
-      > foo
-      > bar
-      > baz
+      > a
+      > b[]
   `);
+  const firstDef = result.ast.defs[0] as Root;
+  expect(firstDef.kind).toBe('root');
+  expect(firstDef.types.length).toBe(2);
+  const types = firstDef.types;
+  expect(types).toMatchObject<DeepPartial<Type>[]>([
+    { type: { text: 'a', } },
+    { type: { text: 'b', }, multiple: true },
+  ]);
 });
 
 test('record 1', () => {
