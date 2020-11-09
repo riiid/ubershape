@@ -2,6 +2,8 @@ import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
 import { SyntaxError } from './parser/recursive-descent-parser';
 import { UbershapeReferenceError, validateUbershape } from './ubershape';
+import { schema2js } from './codegen/js';
+import { SchemaType } from './schema';
 
 try {
   const ubershapeParseResult = parseUbershape(getUbershapeCode());
@@ -20,10 +22,17 @@ try {
       console.error(error);
     }
   }
-  const subshapeParseResult = parseSubshape(getSubshapeCode());
-  const subshapeAst = subshapeParseResult.ast;
+  // const subshapeParseResult = parseSubshape(getSubshapeCode());
+  // const subshapeAst = subshapeParseResult.ast;
   // console.log(JSON.stringify(ubershapeAst, null, 2));
   // console.log(JSON.stringify(subshapeAst, null, 2));
+  const { js, dts } = schema2js({
+    kind: SchemaType.Ubershape,
+    name: 'riiid-rich-text',
+    shape: ubershapeAst,
+  });
+  console.log(js);
+  console.log(dts);
 } catch (err) {
   if (err instanceof SyntaxError) {
     console.error(err.toString());
