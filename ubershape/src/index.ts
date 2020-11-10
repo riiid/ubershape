@@ -3,7 +3,8 @@ import { parse as parseSubshape } from './parser/subshape';
 import { SyntaxError } from './parser/recursive-descent-parser';
 import { UbershapeReferenceError, validateUbershape } from './ubershape';
 import { schema2js } from './codegen/js';
-import { SchemaType } from './schema';
+import { SchemaType, SubshapeSchema, UbershapeSchema } from './schema';
+import { applySubshape } from './subshape';
 
 try {
   const ubershapeParseResult = parseUbershape(getUbershapeCode());
@@ -22,15 +23,23 @@ try {
       console.error(error);
     }
   }
-  // const subshapeParseResult = parseSubshape(getSubshapeCode());
-  // const subshapeAst = subshapeParseResult.ast;
+  const subshapeParseResult = parseSubshape(getSubshapeCode());
+  const subshapeAst = subshapeParseResult.ast;
   // console.log(JSON.stringify(ubershapeAst, null, 2));
   // console.log(JSON.stringify(subshapeAst, null, 2));
-  const { js, dts } = schema2js({
+  const ubershapeSchema: UbershapeSchema = {
     kind: SchemaType.Ubershape,
     name: 'riiid-rich-text',
     shape: ubershapeAst,
-  });
+  };
+  const subshapeSchema: SubshapeSchema = {
+    kind: SchemaType.Subshape,
+    name: 'kaplan',
+    shape: applySubshape(ubershapeAst, subshapeAst),
+    ubershape: ubershapeSchema,
+    subshapeAst: subshapeAst,
+  };
+  const { js, dts } = schema2js(subshapeSchema);
   console.log(js);
   console.log(dts);
 } catch (err) {
@@ -85,10 +94,6 @@ function getSubshapeCode() {
     select root
       > block-element[]
       > block-element
-
-    select some document
-      | block-element[]
-      | block-element
 
     select record paragraph {
       children

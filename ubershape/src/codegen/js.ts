@@ -1,6 +1,6 @@
 import { kebab2camel, kebab2pascal } from '../misc/case';
 import { Record, Type, Union } from '../parser/ast';
-import { Schema } from '../schema';
+import { Schema, SchemaType } from '../schema';
 
 export function schema2js(schema: Schema): JsAndDts {
   const jsBuffer: string[] = [
@@ -55,7 +55,11 @@ function type2js(type: Type): string {
 }
 
 function record2js(schema: Schema, record: Record): JsAndDts {
-  const typeName = kebab2pascal(record.name.text);
+  const typeName = (
+    schema.kind === SchemaType.Subshape ?
+    kebab2pascal(schema.name) + kebab2pascal(record.name.text) :
+    kebab2pascal(record.name.text)
+  );
   return {
     js: `
       exports.is${typeName} = is${typeName};
@@ -93,7 +97,11 @@ function record2js(schema: Schema, record: Record): JsAndDts {
 }
 
 function union2js(schema: Schema, union: Union): JsAndDts {
-  const typeName = kebab2pascal(union.name.text);
+  const typeName = (
+    schema.kind === SchemaType.Subshape ?
+    kebab2pascal(schema.name) + kebab2pascal(union.name.text) :
+    kebab2pascal(union.name.text)
+  );
   return {
     js: `
       exports.is${typeName} = is${typeName};
