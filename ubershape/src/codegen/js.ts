@@ -6,6 +6,10 @@ import { Schema, SchemaType } from '../schema';
 import { getRoot } from '../ubershape';
 
 export function schema2js(schema: Schema): JsAndDts {
+  const root = getRoot(schema.shape)!;
+  const recordAndUnions = schema.shape.defs.filter(
+    def => def.kind !== 'root'
+  ) as (Record | Union)[];
   const jsBuffer: string[] = [
     `
       function every(arr, fn) {
@@ -16,17 +20,39 @@ export function schema2js(schema: Schema): JsAndDts {
       function isNumber(value) { return typeof value === 'number'; }
       function isString(value) { return typeof value === 'string'; }
     `,
+    schema.kind === SchemaType.Subshape ? `
+      exports.selection = {
+        ${recordAndUnions.map(def => `
+          '${def.name.text}': {
+            ${getFragments(def).map(fragment => `
+              '${fragment}': true,
+            `).join('')}
+          },
+        `).join('')}
+      };
+    ` : '',
   ];
-  const dtsBuffer: string[] = [];
+  const dtsBuffer: string[] = [
+    schema.kind === SchemaType.Ubershape ? `
+      export interface $ShapeSelection {
+        ${recordAndUnions.map(def => `
+          '${def.name.text}'?: {
+            ${getFragments(def).map(fragment => `
+              '${fragment}'?: true,
+            `).join('')}
+          },
+        `).join('')}
+      }
+    ` : `
+      import { $ShapeSelection } from './${schema.ubershape.name}';
+      export const ${kebab2camel(schema.name)}ShapeSelection: $ShapeSelection;
+    `,
+  ];
   {
-    const root = getRoot(schema.shape)!;
     const { js, dts } = root2js(schema, root);
     jsBuffer.push(js);
     dtsBuffer.push(dts);
   }
-  const recordAndUnions = schema.shape.defs.filter(
-    def => def.kind !== 'root'
-  ) as (Record | Union)[];
   for (const def of recordAndUnions) {
     const { js, dts } = (
       def.kind === 'record' ?
@@ -45,6 +71,14 @@ export function schema2js(schema: Schema): JsAndDts {
 interface JsAndDts {
   js: string;
   dts: string;
+}
+
+function getFragments(def: Record | Union): string[] {
+  if (def.kind === 'record') {
+    return def.fields.map(field => field.name.text);
+  } else {
+    return def.types.map(type2str);
+  }
 }
 
 function type2str(type: Type): string {
@@ -72,12 +106,23 @@ function typeName2Js(schema: Schema, type: Token): string {
 }
 
 function root2js(schema: Schema, root: Root): JsAndDts {
-  const codes = root.types.map(
+  const roots = `[${
+    root.types.map(
+      rootType => `'${type2str(rootType)}'`
+    ).join(',')
+  }]`;
+  const rootTypes = root.types.map(
     rootType => rootType2js(schema, rootType)
   );
   return {
-    js: codes.map(({ js }) => js).join(''),
-    dts: codes.map(({ dts }) => dts).join(''),
+    js: `
+      ${rootTypes.map(({ js }) => js).join('')}
+      exports.roots = ${roots};
+    `,
+    dts: `
+      ${rootTypes.map(({ dts }) => dts).join('')}
+      export const roots: ${roots};
+    `,
   };
 }
 
