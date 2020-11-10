@@ -1,11 +1,14 @@
 import { kebab2camel, kebab2pascal } from '../misc/case';
-import { Record, Type, Union } from '../parser/ast';
+import { Record, Root, Type, Union } from '../parser/ast';
+import { Token } from '../parser/recursive-descent-parser';
+import { isPrimitiveTypeName } from '../primitive';
 import { Schema, SchemaType } from '../schema';
+import { getRoot } from '../ubershape';
 
 export function schema2js(schema: Schema): JsAndDts {
   const jsBuffer: string[] = [
     `
-      function _every(arr, fn) {
+      function every(arr, fn) {
         if (!Array.isArray(arr)) return false;
         return arr.every(fn);
       }
@@ -15,6 +18,12 @@ export function schema2js(schema: Schema): JsAndDts {
     `,
   ];
   const dtsBuffer: string[] = [];
+  {
+    const root = getRoot(schema.shape)!;
+    const { js, dts } = root2js(schema, root);
+    jsBuffer.push(js);
+    dtsBuffer.push(dts);
+  }
   const recordAndUnions = schema.shape.defs.filter(
     def => def.kind !== 'root'
   ) as (Record | Union)[];
@@ -46,20 +55,70 @@ function type2str(type: Type): string {
   }
 }
 
-function type2js(type: Type): string {
+function type2js(schema: Schema, type: Type): string {
   if (type.multiple) {
-    return kebab2pascal(type.type.text) + '[]';
+    return typeName2Js(schema, type.type) + '[]';
   } else {
-    return kebab2pascal(type.type.text);
+    return typeName2Js(schema, type.type);
   }
 }
 
-function record2js(schema: Schema, record: Record): JsAndDts {
-  const typeName = (
-    schema.kind === SchemaType.Subshape ?
-    kebab2pascal(schema.name) + kebab2pascal(record.name.text) :
-    kebab2pascal(record.name.text)
+function typeName2Js(schema: Schema, type: Token): string {
+  if (schema.kind === SchemaType.Subshape && !isPrimitiveTypeName(type.text)) {
+    return kebab2pascal(schema.name) + kebab2pascal(type.text);
+  } else {
+    return kebab2pascal(type.text);
+  }
+}
+
+function root2js(schema: Schema, root: Root): JsAndDts {
+  const codes = root.types.map(
+    rootType => rootType2js(schema, rootType)
   );
+  return {
+    js: codes.map(({ js }) => js).join(''),
+    dts: codes.map(({ dts }) => dts).join(''),
+  };
+}
+
+function rootType2js(schema: Schema, rootType: Type): JsAndDts {
+  const typeName = typeName2Js(schema, rootType.type);
+  const encodeFunctionName = (
+    rootType.multiple ?
+    `encode${typeName}Array` :
+    `encode${typeName}`
+  );
+  const decodeFunctionName = (
+    rootType.multiple ?
+    `decode${typeName}Array` :
+    `decode${typeName}`
+  );
+  return {
+    js: `
+      exports.${encodeFunctionName} = ${encodeFunctionName};
+      function ${encodeFunctionName}(value) {
+        return JSON.stringify(value);
+      }
+      exports.${decodeFunctionName} = ${decodeFunctionName};
+      function ${decodeFunctionName}(value) {
+        const obj = JSON.parse(value);
+        if (!${
+          rootType.multiple ?
+          `every(obj, is${typeName})` :
+          `is${typeName}(obj)`
+        }) throw new Error();
+        return obj;
+      }
+    `,
+    dts: `
+      export function ${encodeFunctionName}(value: ${type2js(schema, rootType)}): string;
+      export function ${decodeFunctionName}(value: string): ${type2js(schema, rootType)};
+    `,
+  };
+}
+
+function record2js(schema: Schema, record: Record): JsAndDts {
+  const typeName = typeName2Js(schema, record.name);
   return {
     js: `
       exports.is${typeName} = is${typeName};
@@ -71,7 +130,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
           const fieldTypeName = kebab2pascal(field.type.type.text);
           const fieldIsValid = (
             field.type.multiple ?
-            `_every(value.${fieldName}, is${fieldTypeName})` :
+            `every(value.${fieldName}, is${fieldTypeName})` :
             `is${fieldTypeName}(value.${fieldName})`
           );
           return `
@@ -81,13 +140,13 @@ function record2js(schema: Schema, record: Record): JsAndDts {
           `;
         }).join('')}
         return true;
-      };
+      }
     `,
     dts: `
       export interface ${typeName} {
         ${record.fields.map(field => {
-          const name = kebab2pascal(field.name.text);
-          const type = type2js(field.type);
+          const name = kebab2camel(field.name.text);
+          const type = type2js(schema, field.type);
           return `${name}: ${type};\n`;
         }).join('')}
       }
@@ -97,11 +156,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
 }
 
 function union2js(schema: Schema, union: Union): JsAndDts {
-  const typeName = (
-    schema.kind === SchemaType.Subshape ?
-    kebab2pascal(schema.name) + kebab2pascal(union.name.text) :
-    kebab2pascal(union.name.text)
-  );
+  const typeName = typeName2Js(schema, union.name);
   return {
     js: `
       exports.is${typeName} = is${typeName};
@@ -110,23 +165,23 @@ function union2js(schema: Schema, union: Union): JsAndDts {
         if (value.length !== 2) return false;
         switch (value[0]) {
           ${union.types.map(type => {
-            const typeName = kebab2pascal(type.type.text);
+            const typeName = typeName2Js(schema, type.type);
             return `
               case '${type2str(type)}': return ${
                 type.multiple ?
-                `_every(value[1], is${typeName})` :
+                `every(value[1], is${typeName})` :
                 `is${typeName}(value[1])`
               };
             `;
           }).join('')}
           default: return false;
         }
-      };
+      }
     `,
     dts: `
       export type ${typeName} =
         ${union.types.map(type => {
-          return `| ['${type2str(type)}', ${type2js(type)}]\n`;
+          return `| ['${type2str(type)}', ${type2js(schema, type)}]\n`;
         }).join('')}
         ;
       export function is${typeName}(value: any): value is ${typeName};

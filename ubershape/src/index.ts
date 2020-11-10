@@ -95,8 +95,19 @@ function getSubshapeCode() {
       > block-element[]
       > block-element
 
+    select union block-element
+      | paragraph
+
     select record paragraph {
       children
+    }
+
+    select union inline-element
+      | text
+
+    select record text {
+      value
+      bold
     }
   `;
 }
