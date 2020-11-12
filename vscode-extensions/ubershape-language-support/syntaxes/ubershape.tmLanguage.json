@@ -51,16 +51,6 @@
                     }
                 },
                 {
-                    "name": "comment.block.documentation.ubershape",
-                    "begin": "/\\*\\*(?!/)",
-                    "end": "\\*/",
-                    "captures": {
-                        "0": {
-                            "name": "punctuation.definition.comment.ubershape"
-                        }
-                    }
-                },
-                {
                     "begin": "(^[ \\t]+)?(?=//)",
                     "beginCaptures": {
                         "1": {
