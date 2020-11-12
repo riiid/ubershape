@@ -1,0 +1,64 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Ubershape",
+    "patterns": [
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#comment"
+        },
+        {
+            "include": "#meta"
+        }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [{
+                "name": "keyword.define.ubershape",
+                "match": "\\b(root|record|union|enum)\\b"
+            }]
+        },
+        "meta": {
+            "match": "\\{|\\}",
+            "name": "meta.brace.curly.js"
+        },
+        "comment": {
+            "name": "comment.ubershape",
+            "patterns": [
+                {
+                    "name": "comment.block.documentation.ubershape",
+                    "begin": "/\\*\\*(?!/)",
+                    "end": "\\*/",
+                    "captures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.ubershape"
+                        }
+                    }
+                },
+                {
+                    "begin": "(^[ \\t]+)?(?=//)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.whitespace.comment.leading.ubershape"
+                        }
+                    },
+                    "end": "(?!\\G)",
+                    "patterns": [
+                        {
+                            "begin": "//",
+                            "beginCaptures": {
+                                "0": {
+                                    "name": "punctuation.definition.comment.ubershape"
+                                }
+                            },
+                            "end": "\\n",
+                            "name": "comment.line.double-slash.ubershape"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "scopeName": "source.ubershape"
+}
