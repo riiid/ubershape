@@ -175,15 +175,15 @@ function record2js(schema: Schema, record: Record): JsAndDts {
         if (value == null) return false;
         if (typeof value !== 'object') return false;
         ${record.fields.map(field => {
-          const fieldName = kebab2camel(field.name.text);
+          const fieldValue = `value['${field.name.text}']`;
           const fieldTypeName = kebab2pascal(field.type.type.text);
           const fieldIsValid = (
             field.type.multiple ?
-            `every(value.${fieldName}, is${fieldTypeName})` :
-            `is${fieldTypeName}(value.${fieldName})`
+            `every(${fieldValue}, is${fieldTypeName})` :
+            `is${fieldTypeName}(${fieldValue})`
           );
           return `
-            if (value.${fieldName} != null && !${fieldIsValid}) {
+            if (${fieldValue} != null && !${fieldIsValid}) {
               return false;
             }
           `;
@@ -194,9 +194,8 @@ function record2js(schema: Schema, record: Record): JsAndDts {
     dts: `
       export interface ${typeName} {
         ${record.fields.map(field => {
-          const name = kebab2camel(field.name.text);
           const type = type2js(schema, field.type);
-          return `${name}: ${type};\n`;
+          return `'${field.name.text}': ${type};\n`;
         }).join('')}
       }
       export function is${typeName}(value: any): value is ${typeName};
