@@ -4,6 +4,7 @@
   "main": "lib/index.js",
   "license": "(MIT OR Apache-2.0)",
   "scripts": {
+    "build": "rm -rf ./lib & tsc",
     "dev": "sucrase-node src/index.ts",
     "test": "jest"
   },
