@@ -1,4 +1,4 @@
-import { Def, FieldSelector, Select, SubshapeAst, TypeSelector, UbershapeAst } from './parser/ast';
+import { Def, EnumValueSelector, FieldSelector, Select, SubshapeAst, TypeSelector, UbershapeAst } from './parser/ast';
 import { Span } from './parser/recursive-descent-parser';
 import { findDefByType, getRoot, UbershapeRootNotExistError } from './ubershape';
 
@@ -51,6 +51,17 @@ export function applySubshape(
       }
       continue;
     }
+    if (select.kind === 'select-enum') {
+      if (def.kind !== 'enum') throw new SubshapeSelectReferenceError(select);
+      for (const valueSelector of select.valueSelectors) {
+        const value = def.values.find(
+          value => value.name.text === valueSelector.valueName.text
+        );
+        if (!value) throw new SubshapeValueSelectorReferenceError(def, valueSelector);
+        usedSet.add(value);
+      }
+      continue;
+    }
   }
   return {
     defs: ubershapeAst.defs.filter(
@@ -72,6 +83,11 @@ export function applySubshape(
             ...def,
             types: def.types.filter(type => usedSet.has(type)),
           };
+        case 'enum':
+          return {
+            ...def,
+            values: def.values.filter(value => usedSet.has(value)),
+          };
       }
     }),
   };
@@ -91,6 +107,12 @@ export class SubshapeFieldSelectorReferenceError extends Error {
 
 export class SubshapeTypeSelectorReferenceError extends Error {
   constructor(public def: Def, public typeSelector: TypeSelector) {
+    super();
+  }
+}
+
+export class SubshapeValueSelectorReferenceError extends Error {
+  constructor(public def: Def, public valueSelector: EnumValueSelector) {
     super();
   }
 }

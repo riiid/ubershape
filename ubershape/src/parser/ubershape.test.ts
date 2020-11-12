@@ -1,5 +1,5 @@
 import { DeepPartial } from '../misc/type';
-import { Field, Record, Root, Type, Union } from './ast';
+import { Enum, EnumValue, Field, Record, Root, Type, Union } from './ast';
 import { parse } from './ubershape';
 
 test('root 1', () => {
@@ -93,5 +93,34 @@ test('union 3', () => {
     { type: { text: 'boolean' } },
     { type: { text: 'number' } },
     { type: { text: 'string' } },
+  ]);
+});
+
+test('enum 1', () => {
+  parse(`
+    enum foo
+  `);
+});
+
+test('enum 2', () => {
+  parse(`
+    enum foo
+      | #a
+  `);
+});
+
+test('enum 3', () => {
+  const result = parse(`
+    enum foo
+      | #a
+      | #b
+  `);
+  const firstDef = result.ast.defs[0] as Enum;
+  expect(firstDef.kind).toBe('enum');
+  expect(firstDef.name.text).toBe('foo');
+  const values = firstDef.values;
+  expect(values).toMatchObject<DeepPartial<EnumValue>[]>([
+    { name: { text: 'a' } },
+    { name: { text: 'b' } },
   ]);
 });

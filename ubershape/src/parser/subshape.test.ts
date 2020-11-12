@@ -1,5 +1,5 @@
 import { DeepPartial } from '../misc/type';
-import { FieldSelector, SelectRecord, SelectRoot, SelectUnion, TypeSelector } from './ast';
+import { EnumValueSelector, FieldSelector, SelectEnum, SelectRecord, SelectRoot, SelectUnion, TypeSelector } from './ast';
 import { parse } from './subshape';
 
 test('use', () => {
@@ -66,5 +66,24 @@ test('select union', () => {
   expect(typeSelectors).toMatchObject<DeepPartial<TypeSelector>[]>([
     { type: { text: 'a', } },
     { type: { text: 'b', }, multiple: true },
+  ]);
+});
+
+test('select enum', () => {
+  const result = parse(`
+    use './foo.ubershape'
+
+    select enum foo
+      | #a
+      | #b
+  `);
+
+  const selectEnumStatement = result.ast.selects[0] as SelectEnum;
+  expect(selectEnumStatement.kind).toBe('select-enum');
+  expect(selectEnumStatement.valueSelectors.length).toBe(2);
+  const valueSelectors = selectEnumStatement.valueSelectors;
+  expect(valueSelectors).toMatchObject<DeepPartial<EnumValueSelector>[]>([
+    { valueName: { text: 'a', } },
+    { valueName: { text: 'b', } },
   ]);
 });

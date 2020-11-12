@@ -1,4 +1,4 @@
-import { FieldSelector, Select, SelectRecord, SelectRoot, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
+import { EnumValueSelector, FieldSelector, Select, SelectEnum, SelectRecord, SelectRoot, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
 import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
@@ -48,11 +48,17 @@ function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select 
   parseWhitespace(parser);
   const selectRoot = parseSelectRoot(parser, comments);
   if (selectRoot) return selectRoot;
+  const selectEnum = parseSelectEnum(parser, comments);
+  if (selectEnum) return selectEnum;
   const selectUnion = parseSelectUnion(parser, comments);
   if (selectUnion) return selectUnion;
   const selectRecord = parseSelectRecord(parser, comments);
   if (selectRecord) return selectRecord;
-  throw new SyntaxError(parser, ['root', 'union', 'record'], [kebabCasePattern]);
+  throw new SyntaxError(
+    parser,
+    ['root', 'enum', 'union', 'record'],
+    [kebabCasePattern]
+  );
 }
 
 function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): SelectRoot | undefined {
@@ -76,6 +82,34 @@ function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): Sel
     end: (typeSelectors[typeSelectors.length - 1] ?? keyword).end,
     comments,
     typeSelectors,
+  };
+}
+
+function parseSelectEnum(parser: RecursiveDescentParser, comments: Token[]): SelectEnum | undefined {
+  const keyword = parser.accept('enum');
+  if (!keyword) return;
+  parseWhitespace(parser);
+  const typeName = parser.expect(kebabCasePattern);
+  const valueSelectors: EnumValueSelector[] = [];
+  while (true) {
+    const loc = parser.loc;
+    parseWhitespace(parser);
+    if (!parser.accept('|')) {
+      parser.loc = loc;
+      break;
+    }
+    parseWhitespace(parser);
+    const sharp = parser.expect('#');
+    const valueName = parser.expect(kebabCasePattern);
+    valueSelectors.push({ start: sharp.start, end: valueName.end, valueName });
+  }
+  return {
+    kind: 'select-enum',
+    start: keyword.start,
+    end: (valueSelectors[valueSelectors.length - 1] ?? typeName).end,
+    comments,
+    typeName,
+    valueSelectors,
   };
 }
 

@@ -5,7 +5,7 @@ export interface RecursiveDescentParser {
   getAroundText: (loc: number, length?: number, window?: number) => string;
   try(pattern: Pattern): Token | undefined;
   accept(pattern: Pattern): Token | undefined;
-  expect(pattern: Pattern, mistakePatterns?: Pattern[]): Token;
+  expect(acceptPattern: Pattern, expectedPatterns?: Pattern[], mistakePatterns?: Pattern[]): Token;
 }
 export interface RecursiveDescentParserConfig {
   debug: boolean;
@@ -55,10 +55,15 @@ export function createRecursiveDescentParser(
       if (typeof pattern === 'string') return acceptString(pattern);
       return acceptRegex(pattern);
     },
-    expect(pattern, mistakePatterns) {
-      const result = parser.accept(pattern);
+    expect(acceptPattern, expectedPatterns, mistakePatterns) {
+      const result = parser.accept(acceptPattern);
+      const _expectedPatterns: Pattern[] = (
+        expectedPatterns ?
+        [acceptPattern, ...expectedPatterns] :
+        [acceptPattern]
+      );
       if (result == null) {
-        throw new SyntaxError(parser, [pattern], mistakePatterns);
+        throw new SyntaxError(parser, _expectedPatterns, mistakePatterns);
       } else {
         return result;
       }

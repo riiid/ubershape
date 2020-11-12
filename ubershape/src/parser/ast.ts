@@ -17,6 +17,7 @@ export type Def =
   | Root
   | Record
   | Union
+  | Enum
 ;
 
 export interface Root extends Statement<'root'> {
@@ -47,6 +48,16 @@ export interface Type extends Span {
   multiple: boolean;
 }
 
+export interface Enum extends Statement<'enum'> {
+  comments: Token[];
+  name: Token;
+  values: EnumValue[];
+}
+
+export interface EnumValue extends Span {
+  name: Token;
+}
+
 export interface Use extends Statement<'use'> {
   comments: Token[];
   ubershapePath: Token;
@@ -56,6 +67,7 @@ export type Select =
   | SelectRoot
   | SelectRecord
   | SelectUnion
+  | SelectEnum
 ;
 
 export interface SelectRoot extends Statement<'select-root'> {
@@ -75,9 +87,19 @@ export interface SelectUnion extends Statement<'select-union'> {
   typeSelectors: TypeSelector[];
 }
 
+export interface SelectEnum extends Statement<'select-enum'> {
+  comments: Token[];
+  typeName: Token;
+  valueSelectors: EnumValueSelector[];
+}
+
 export interface FieldSelector extends Span {
   comments: Token[];
   fieldName: Token;
 }
 
 export type TypeSelector = Type;
+
+export interface EnumValueSelector extends Span {
+  valueName: Token;
+}

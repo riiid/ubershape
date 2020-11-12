@@ -1,5 +1,5 @@
-import { Def, Field, Record, Root, Type, UbershapeAst, Union } from './ast';
-import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
+import { Def, Enum, EnumValue, Field, Record, Root, Type, UbershapeAst, Union } from './ast';
+import { createRecursiveDescentParser, eof, RecursiveDescentParser, Token } from './recursive-descent-parser';
 import { kebabCasePattern, parseType, parseWhitespace } from './shared';
 
 export interface ParseResult {
@@ -16,19 +16,28 @@ export function parse(text: string): ParseResult {
       defs.push(root);
       continue;
     }
-    const union = parseUnion(parser, comments);
-    if (union) {
-      defs.push(union);
+    const enumDef = parseEnum(parser, comments);
+    if (enumDef) {
+      defs.push(enumDef);
       continue;
     }
-    const record = parseRecord(parser, comments);
-    if (record) {
-      defs.push(record);
+    const unionDef = parseUnion(parser, comments);
+    if (unionDef) {
+      defs.push(unionDef);
+      continue;
+    }
+    const recordDef = parseRecord(parser, comments);
+    if (recordDef) {
+      defs.push(recordDef);
       continue;
     }
     break;
   }
-  parser.expect(eof);
+  parser.expect(
+    eof,
+    ['enum', 'union', 'record'],
+    [kebabCasePattern]
+  );
   return {
     ast: {
       defs,
@@ -58,6 +67,34 @@ function parseRoot(parser: RecursiveDescentParser, comments: Token[]): Root | un
     end: (types[types.length - 1] ?? keyword).end,
     comments,
     types,
+  };
+}
+
+function parseEnum(parser: RecursiveDescentParser, comments: Token[]): Enum | undefined {
+  const keyword = parser.accept('enum');
+  if (!keyword) return;
+  parseWhitespace(parser);
+  const name = parser.expect(kebabCasePattern);
+  const values: EnumValue[] = [];
+  while (true) {
+    const loc = parser.loc;
+    parseWhitespace(parser);
+    if (!parser.accept('|')) {
+      parser.loc = loc;
+      break;
+    }
+    parseWhitespace(parser);
+    const sharp = parser.expect('#');
+    const name = parser.expect(kebabCasePattern);
+    values.push({ start: sharp.start, end: name.end, name });
+  }
+  return {
+    kind: 'enum',
+    start: keyword.start,
+    end: (values[values.length - 1] ?? name).end,
+    comments,
+    name,
+    values,
   };
 }
 

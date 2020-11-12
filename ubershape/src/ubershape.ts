@@ -1,4 +1,4 @@
-import { Def, Record, Root, Type, UbershapeAst, Union } from './parser/ast';
+import { Def, Enum, EnumValue, Record, Root, Type, UbershapeAst, Union } from './parser/ast';
 import { Token } from './parser/recursive-descent-parser';
 import { primitiveTypeNames } from './primitive';
 
@@ -18,6 +18,7 @@ export function validateUbershape(ast: UbershapeAst): Error[] {
     }
     switch (def.kind) {
       case 'root': result.push(...validateRoot(ast, def)); break;
+      case 'enum': result.push(...validateEnum(ast, def)); break;
       case 'union': result.push(...validateUnion(ast, def)); break;
       case 'record': result.push(...validateRecord(ast, def)); break;
     }
@@ -58,6 +59,23 @@ export function validateRoot(ast: UbershapeAst, root: Root): Error[] {
       if (!primitiveTypeNames.includes(type.type.text)) {
         result.push(new UbershapeReferenceError(type));
       }
+    }
+  }
+  return result;
+}
+
+export function validateEnum(_ast: UbershapeAst, enumDef: Enum): Error[] {
+  const result: Error[] = [];
+  const memo: { [key: string]: boolean } = {};
+  if (enumDef.values.length === 0) {
+    result.push(new UbershapeEmptyDefError(enumDef));
+  }
+  for (const value of enumDef.values) {
+    const valueText = '#' + value.name.text;
+    if (memo[valueText]) {
+      result.push(new UbershapeDefDuplicateEnumValueError(value));
+    } else {
+      memo[valueText] = true;
     }
   }
   return result;
@@ -132,6 +150,12 @@ export class UbershapeDuplicateDefError extends Error {
 
 export class UbershapeDefDuplicateTypeError extends Error {
   constructor(public type: Type) {
+    super();
+  }
+}
+
+export class UbershapeDefDuplicateEnumValueError extends Error {
+  constructor(public enumValue: EnumValue) {
     super();
   }
 }
