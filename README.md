@@ -1,5 +1,7 @@
 # ubershape
 
+![UBERSHAPE](./logo/logo_tech_ubershape_v1-4.png)
+
 ## 배경
 뤼이드에서는 여러 분야의 문제풀이 앱을 개발합니다.
 문제풀이 앱을 만들기 위해서는 문제 컨텐츠 변환기, 편집기, 렌더러 등을 개발해야 합니다.
