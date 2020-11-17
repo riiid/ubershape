@@ -3,7 +3,7 @@ import { RecursiveDescentParser, Token } from './recursive-descent-parser';
 
 export const whitespacePattern = /^\s+/;
 export const kebabCasePattern = /^[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z0-9]+)*/;
-export const multilineCommentPattern = /^\/\*(?:.|\r?\n)*\*\//;
+export const multilineCommentPattern = /^\/\*(?:.|\r?\n)*?\*\//;
 export const singlelineCommentPattern = /^\/\/.*(?:\r?\n|$)/;
 
 export function parseWhitespace(parser: RecursiveDescentParser) {
