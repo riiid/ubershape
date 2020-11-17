@@ -1,6 +1,6 @@
 {
   "name": "ubershape",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "lib/index.js",
   "license": "(MIT OR Apache-2.0)",
   "scripts": {
