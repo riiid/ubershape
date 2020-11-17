@@ -244,7 +244,7 @@ function enum2js(schema: Schema, enumDef: Enum): JsAndDts {
       exports.is${typeName} = is${typeName};
       function is${typeName}(value) {
         if (typeof value !== 'string') return false;
-        return is${typeName}.table[value];
+        return !!is${typeName}.table[value];
       }
       is${typeName}.table = {
         ${enumDef.values.map(
