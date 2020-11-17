@@ -1,6 +1,6 @@
-# ubershape
+![UBERSHAPE](./logo/logo_tech_ubershape_v1-11.png)
 
-![UBERSHAPE](./logo/logo_tech_ubershape_v1-4.png)
+---
 
 ## 배경
 뤼이드에서는 여러 분야의 문제풀이 앱을 개발합니다.
