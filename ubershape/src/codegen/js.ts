@@ -21,7 +21,7 @@ export function schema2js(schema: Schema): JsAndDts {
       function isString(value) { return typeof value === 'string'; }
     `,
     schema.kind === SchemaType.Subshape ? `
-      exports.selection = {
+      exports.${kebab2camel(schema.name)}ShapeSelection = {
         ${recordAndUnions.map(def => `
           '${def.name.text}': {
             ${getFragments(def).map(fragment => `
@@ -89,6 +89,7 @@ function type2js(schema: Schema, type: Type): string {
   if (type.multiple) {
     return typeName2Js(schema, type.type) + '[]';
   } else {
+    if (isPrimitiveTypeName(type.type.text)) return type.type.text;
     return typeName2Js(schema, type.type);
   }
 }
@@ -192,6 +193,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
       }
     `,
     dts: `
+      ${record.comments.map(comment => comment.text).join('\n')}
       export interface ${typeName} {
         ${record.fields.map(field => {
           const type = type2js(schema, field.type);
@@ -227,6 +229,7 @@ function union2js(schema: Schema, union: Union): JsAndDts {
       }
     `,
     dts: `
+      ${union.comments.map(comment => comment.text).join('\n')}
       export type ${typeName} =
         ${union.types.map(type => {
           return `| ['${type2str(type)}', ${type2js(schema, type)}]\n`;
@@ -253,6 +256,7 @@ function enum2js(schema: Schema, enumDef: Enum): JsAndDts {
       };
     `,
     dts: `
+      ${enumDef.comments.map(comment => comment.text).join('\n')}
       export type ${typeName} =
         ${enumDef.values.map(value => {
           return `| '#${value.name.text}'\n`;
