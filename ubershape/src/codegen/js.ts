@@ -177,7 +177,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
         if (typeof value !== 'object') return false;
         ${record.fields.map(field => {
           const fieldValue = `value['${field.name.text}']`;
-          const fieldTypeName = kebab2pascal(field.type.type.text);
+          const fieldTypeName = type2js(schema, field.type);
           const fieldIsValid = (
             field.type.multiple ?
             `every(${fieldValue}, is${fieldTypeName})` :
@@ -197,7 +197,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
       export interface ${typeName} {
         ${record.fields.map(field => {
           const type = type2js(schema, field.type);
-          return `'${field.name.text}': ${type};\n`;
+          return `'${field.name.text}'?: ${type};\n`;
         }).join('')}
       }
       export function is${typeName}(value: any): value is ${typeName};
