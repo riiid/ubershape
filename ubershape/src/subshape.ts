@@ -93,8 +93,29 @@ export function applySubshape(
   };
 }
 
+export function validateSubshape(
+  ubershapeAst: UbershapeAst,
+  subshapeAst: SubshapeAst
+): Error[] {
+  const result: Error[] = [];
+  // TODO
+  return result;
+}
+
 export class SubshapeSelectReferenceError extends Error {
   constructor(public select: Select) {
+    super();
+  }
+}
+
+export class SubshapeOrphanSelectError extends Error {
+  constructor(public select: Select) {
+    super();
+  }
+}
+
+export class SubshapeSelectRequiredError extends Error {
+  constructor(public def: Def, public selector: TypeSelector | FieldSelector) {
     super();
   }
 }
