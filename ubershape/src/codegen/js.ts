@@ -196,7 +196,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
       ${record.comments.map(comment => comment.text).join('\n')}
       export interface ${typeName} {
         ${record.fields.map(field => {
-          const type = type2js(schema, field.type);
+          const type = typeName2Js(schema, field.type.type);
           return `'${field.name.text}'?: ${type};\n`;
         }).join('')}
       }
