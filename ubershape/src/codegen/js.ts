@@ -64,7 +64,7 @@ export function schema2js(schema: Schema): JsAndDts {
   };
 }
 
-interface JsAndDts {
+export interface JsAndDts {
   js: string;
   dts: string;
 }
@@ -177,7 +177,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
         if (typeof value !== 'object') return false;
         ${record.fields.map(field => {
           const fieldValue = `value['${field.name.text}']`;
-          const fieldTypeName = type2js(schema, field.type);
+          const fieldTypeName = typeName2Js(schema, field.type.type);
           const fieldIsValid = (
             field.type.multiple ?
             `every(${fieldValue}, is${fieldTypeName})` :
@@ -196,7 +196,7 @@ function record2js(schema: Schema, record: Record): JsAndDts {
       ${record.comments.map(comment => comment.text).join('\n')}
       export interface ${typeName} {
         ${record.fields.map(field => {
-          const type = typeName2Js(schema, field.type.type);
+          const type = type2js(schema, field.type);
           return `'${field.name.text}'?: ${type};\n`;
         }).join('')}
       }

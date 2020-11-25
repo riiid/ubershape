@@ -1,0 +1,81 @@
+use './riiid-rich-text-v2.ubershape'
+
+select root
+    > document-sections
+    > document-block-elements
+    > document-inline-elements
+
+select record document-sections {
+    children
+}
+select record document-block-elements {
+    children
+}
+select record document-inline-elements {
+    children
+}
+
+select record section {
+    children
+}
+
+select union block-element
+    | paragraph
+
+select union inline-element
+    | text
+    | math-expression
+    | image
+    | table
+
+select union math-expression
+    | tex
+
+select record paragraph {
+    children
+}
+
+select record text {
+    value
+    weight
+    italic
+    underline
+}
+
+select record tex {
+    value
+}
+
+select record image {
+    src
+}
+
+select record table {
+    body
+}
+select record table-body {
+    rows
+}
+select record table-row {
+    cells
+}
+select record table-cell {
+    align
+    colspan
+    rowspan
+    children
+    realtor-background
+}
+
+select enum realtor-table-cell-background
+    | #none
+    | #strong
+
+select enum text-weight
+    | #w400
+    | #w700
+
+select enum text-align
+    | #left
+    | #center
+    | #right

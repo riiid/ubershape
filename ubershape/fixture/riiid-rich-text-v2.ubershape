@@ -1,0 +1,227 @@
+root
+    > document-sections
+    > document-block-elements
+    > document-inline-elements
+
+record document-sections {
+    children: section[]
+}
+record document-block-elements {
+    children: block-element[]
+}
+record document-inline-elements {
+    children: inline-element[]
+}
+
+/**
+ * 섹션
+ */
+record section {
+    children: block-element[]
+}
+
+/**
+ * 블록 엘리먼트
+ */
+union block-element
+    | heading
+    | paragraph
+    | figure
+    | line-numbered-area
+    | precalculated-line-numbered-area
+    | dialog-list
+    | note
+
+/**
+ * 인라인 엘리먼트
+ */
+union inline-element
+    | text
+    | math-expression
+    | image
+    | table
+    | point
+    | refer-to
+    | referred-by
+
+union math-expression
+    | tex
+
+/**
+ * 제목
+ */
+record heading {
+    level: heading-level
+    align: text-align
+    children: inline-element[]
+}
+
+/**
+ * 문단
+ */
+record paragraph {
+    align: text-align
+    numbering: numbering
+    indent-level: number
+    children: inline-element[]
+}
+
+/**
+ * 캡션이 있는 삽화, 도표 등
+ */
+record figure {
+    element: figure-element
+    caption: inline-element[]
+}
+union figure-element
+    | image
+
+record line-numbered-area {
+    children: block-element[]
+}
+record precalculated-line-numbered-area {
+    lines: precalculated-line[]
+}
+record precalculated-line {
+    children: inline-element[]
+}
+
+record dialog-list {
+    children: dialog[]
+}
+record dialog {
+    children: inline-element[]
+}
+
+/**
+ * 텍스트
+ */
+record text {
+    value: string
+    weight: text-weight
+    italic: boolean
+    underline: boolean
+    strike: boolean
+    supsub: supsub
+}
+
+/**
+ * 수식
+ */
+record tex {
+    value: string
+}
+
+/**
+ * 이미지
+ */
+record image {
+    src: string
+    alt: string
+    width: number
+    height: number
+}
+
+/**
+ * 테이블
+ */
+record table {
+    head: table-head
+    body: table-body
+    foot: table-foot
+}
+record table-head {
+    rows: table-row[]
+}
+record table-body {
+    rows: table-row[]
+}
+record table-foot {
+    rows: table-row[]
+}
+record table-row {
+    cells: table-cell[]
+}
+record table-cell {
+    align: text-align
+    colspan: number
+    rowspan: number
+    children: block-element[]
+    background: string
+    realtor-background: realtor-table-cell-background
+}
+
+record point {
+    id: string
+}
+record refer-to {
+    start-point-id: string
+    end-point-id: string
+}
+record referred-by {
+    /**
+     * question id. see content schema
+     */
+    by: string
+    children: inline-element[]
+}
+
+record note {
+    children: inline-element[]
+}
+
+enum realtor-table-cell-background
+    | #none
+    | #strong
+
+/**
+ * 텍스트 두께
+ */
+enum text-weight
+    | #w100
+    | #w200
+    | #w300
+    | #w400
+    | #w500
+    | #w600
+    | #w700
+    | #w800
+    | #w900
+
+/**
+ * 텍스트 정렬
+ */
+enum text-align
+    | #justify
+    | #left
+    | #center
+    | #right
+
+/**
+ * 텍스트 윗첨자 아랫첨자
+ */
+enum supsub
+    | #none
+    | #sup
+    | #sub
+
+/**
+ * 제목 단계
+ */
+enum heading-level
+    | #h1
+    | #h2
+    | #h3
+    | #h4
+    | #h5
+    | #h6
+
+/**
+ * 번호 매기기
+ */
+enum numbering
+    | #none
+    | #disc
+    | #decimal
+    | #upper-roman
+    | #lower-roman
