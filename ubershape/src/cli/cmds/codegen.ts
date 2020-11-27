@@ -1,8 +1,8 @@
 import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { schema2js } from '../../codegen/js';
-import { writeJsAndDts } from '../../codegen/write-file';
-import { getReadFunction } from '../../read-schema';
+import { writeJsAndDts } from '../../io/write-file';
+import { getReadFunction } from '../../io/read-schema';
 import type { Yargs, ArgvFromBuilder } from '../type';
 
 export const command = 'codegen <ubershape> [subshapes..]';

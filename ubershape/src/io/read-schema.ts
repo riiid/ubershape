@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse as parseSubshape, ParseResult as SubshapeParseResult } from './parser/subshape';
-import { parse as parseUbershape, ParseResult as UbershapeParseResult } from './parser/ubershape';
-import { Schema, SchemaType } from './schema';
-import { applySubshape } from './subshape';
+import { parse as parseSubshape, ParseResult as SubshapeParseResult } from '../parser/subshape';
+import { parse as parseUbershape, ParseResult as UbershapeParseResult } from '../parser/ubershape';
+import { Schema, SchemaType } from '../schema';
+import { applySubshape } from '../subshape';
 
 type ParseResult = SubshapeParseResult | UbershapeParseResult;
 export interface ReadResult {

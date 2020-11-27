@@ -1,12 +1,14 @@
+import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { Schema, SubshapeSchema, UbershapeSchema } from '../schema';
 import { schema2js, JsAndDts } from './js';
-import { getReadFunction } from '../read-schema';
-import { writeJsAndDts } from './write-file';
+import { getReadFunction } from '../io/read-schema';
+import { writeJsAndDts } from '../io/write-file';
 
 const read = getReadFunction();
-const ubershapePackageDir = path.resolve(__dirname, '../..');
-const generatedDir = path.join(ubershapePackageDir, 'generated');
+const fixtureDir = path.resolve(__dirname, 'fixture');
+const generatedDir = path.resolve(__dirname, 'generated');
+mkdirp.sync(generatedDir);
 
 test('enum', () => {
   const rrtv2 = getRrtv2();
@@ -15,12 +17,16 @@ test('enum', () => {
 });
 
 function getRrtv2() {
-  const rrtv2Schema = read('./fixture/riiid-rich-text-v2.ubershape').schema as UbershapeSchema;
+  const rrtv2Schema = readFixture('riiid-rich-text-v2.ubershape').schema as UbershapeSchema;
   return getGeneratedModule(rrtv2Schema);
 }
 function getRrtv2Realtor() {
-  const rrtv2RealtorSchema = read('./fixture/rrt-v2-realtor.subshape').schema as SubshapeSchema;
+  const rrtv2RealtorSchema = readFixture('rrt-v2-realtor.subshape').schema as SubshapeSchema;
   return getGeneratedModule(rrtv2RealtorSchema);
+}
+
+function readFixture(fileName: string) {
+  return read(path.join(fixtureDir, fileName));
 }
 
 function getGeneratedModule(schema: Schema): any {
