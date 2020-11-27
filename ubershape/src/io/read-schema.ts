@@ -7,11 +7,15 @@ import { applySubshape } from '../subshape';
 
 type ParseResult = SubshapeParseResult | UbershapeParseResult;
 export interface ReadResult {
+  absoluteSchemaFilePath: string;
   parseResult: ParseResult;
   schema: Schema;
 }
+export interface ReadFn {
+  (absoluteSchemaFilePath: string): ReadResult;
+}
 
-export function getReadFunction() {
+export function getReadFunction(): ReadFn {
   const memo: { [absoluteSchemaFilePath: string]: ReadResult } = {};
   return read;
   function read(absoluteSchemaFilePath: string): ReadResult {
@@ -33,6 +37,7 @@ export function getReadFunction() {
     const parseResult = parseUbershape(code);
     const shape = parseResult.ast;
     return {
+      absoluteSchemaFilePath,
       parseResult,
       schema: {
         kind,
@@ -55,6 +60,7 @@ export function getReadFunction() {
     if (ubershape.kind !== SchemaType.Ubershape) throw new Error('TODO: write error message');
     const shape = applySubshape(ubershape.shape, subshapeAst);
     return {
+      absoluteSchemaFilePath,
       parseResult,
       schema: {
         kind,

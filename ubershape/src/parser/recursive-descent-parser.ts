@@ -164,18 +164,18 @@ function getAroundText(
   const headTexts = heads.map((line, index) => {
     const lineNumber = index + headStart + 1;
     const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
-    return lineNumberText + ' | ' + line + '\n';
-  }).join('');
+    return lineNumberText + ' | ' + line;
+  }).join('\n');
   const tailTexts = tails.map((line, index) => {
     const lineNumber = index + tailStart + 1;
     const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
-    return lineNumberText + ' | ' + line + '\n';
-  }).join('');
-  return (
-    headTexts +
+    return lineNumberText + ' | ' + line;
+  }).join('\n');
+  return [
+    headTexts,
     (new Array(lineNumberDigitCount + 1 + 1)).join(' ') + ' | ' +
     (new Array(colRow.col + 1)).join(' ') +
-    (new Array(length + 1)).join('^') + '\n' +
+    (new Array(length + 1)).join('^'),
     tailTexts
-  );
+  ].join('\n');
 }

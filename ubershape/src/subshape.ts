@@ -96,44 +96,69 @@ export function applySubshape(
 export function validateSubshape(
   ubershapeAst: UbershapeAst,
   subshapeAst: SubshapeAst
-): Error[] {
-  const result: Error[] = [];
+): SubshapeValidationError[] {
+  const result: SubshapeValidationError[] = [];
   // TODO
   return result;
 }
 
-export class SubshapeSelectReferenceError extends Error {
-  constructor(public select: Select) {
+export type SubshapeValidationError =
+  | SubshapeSelectReferenceError
+  | SubshapeOrphanSelectError
+  | SubshapeSelectRequiredError
+  | SubshapeFieldSelectorReferenceError
+  | SubshapeTypeSelectorReferenceError
+;
+
+export { ErrorType as SubshapeValidationErrorType }
+const enum ErrorType {
+  SelectReference,
+  OrphanSelect,
+  SelectRequired,
+  FieldSelectorReference,
+  TypeSelectorReference,
+  ValueSelectorReference,
+}
+
+export { ErrorBase as SubshapeValidationErrorBase }
+abstract class ErrorBase<TErrorType extends ErrorType> extends Error {
+  constructor(public errorType: TErrorType) {
     super();
   }
 }
 
-export class SubshapeOrphanSelectError extends Error {
+export class SubshapeSelectReferenceError extends ErrorBase<ErrorType.SelectReference> {
   constructor(public select: Select) {
-    super();
+    super(ErrorType.SelectReference);
   }
 }
 
-export class SubshapeSelectRequiredError extends Error {
+export class SubshapeOrphanSelectError extends ErrorBase<ErrorType.OrphanSelect> {
+  constructor(public select: Select) {
+    super(ErrorType.OrphanSelect);
+  }
+}
+
+export class SubshapeSelectRequiredError extends ErrorBase<ErrorType.SelectRequired> {
   constructor(public def: Def, public selector: TypeSelector | FieldSelector) {
-    super();
+    super(ErrorType.SelectRequired);
   }
 }
 
-export class SubshapeFieldSelectorReferenceError extends Error {
+export class SubshapeFieldSelectorReferenceError extends ErrorBase<ErrorType.FieldSelectorReference> {
   constructor(public def: Def, public fieldSelector: FieldSelector) {
-    super();
+    super(ErrorType.FieldSelectorReference);
   }
 }
 
-export class SubshapeTypeSelectorReferenceError extends Error {
+export class SubshapeTypeSelectorReferenceError extends ErrorBase<ErrorType.TypeSelectorReference> {
   constructor(public def: Def, public typeSelector: TypeSelector) {
-    super();
+    super(ErrorType.TypeSelectorReference);
   }
 }
 
-export class SubshapeValueSelectorReferenceError extends Error {
+export class SubshapeValueSelectorReferenceError extends ErrorBase<ErrorType.ValueSelectorReference> {
   constructor(public def: Def, public valueSelector: EnumValueSelector) {
-    super();
+    super(ErrorType.ValueSelectorReference);
   }
 }

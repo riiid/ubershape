@@ -2,8 +2,10 @@ import { Def, Enum, EnumValue, Record, Root, Type, UbershapeAst, Union } from '.
 import { Token } from './parser/recursive-descent-parser';
 import { primitiveTypeNames } from './primitive';
 
-export function validateUbershape(ast: UbershapeAst): Error[] {
-  const result: Error[] = [];
+export function validateUbershape(
+  ast: UbershapeAst
+): UbershapeValidationError[] {
+  const result: UbershapeValidationError[] = [];
   const memo: { [key: string]: boolean } = {};
   const roots: Root[] = [];
   for (const def of ast.defs) {
@@ -42,8 +44,11 @@ export function getRoot(ast: UbershapeAst): Root | undefined {
   for (const def of ast.defs) if (def.kind === 'root') return def;
 }
 
-export function validateRoot(ast: UbershapeAst, root: Root): Error[] {
-  const result: Error[] = [];
+export function validateRoot(
+  ast: UbershapeAst,
+  root: Root
+): UbershapeValidationError[] {
+  const result: UbershapeValidationError[] = [];
   const memo: { [key: string]: boolean } = {};
   if (root.types.length === 0) {
     result.push(new UbershapeEmptyDefError(root));
@@ -64,8 +69,11 @@ export function validateRoot(ast: UbershapeAst, root: Root): Error[] {
   return result;
 }
 
-export function validateEnum(_ast: UbershapeAst, enumDef: Enum): Error[] {
-  const result: Error[] = [];
+export function validateEnum(
+  _ast: UbershapeAst,
+  enumDef: Enum
+): UbershapeValidationError[] {
+  const result: UbershapeValidationError[] = [];
   const memo: { [key: string]: boolean } = {};
   if (enumDef.values.length === 0) {
     result.push(new UbershapeEmptyDefError(enumDef));
@@ -81,8 +89,11 @@ export function validateEnum(_ast: UbershapeAst, enumDef: Enum): Error[] {
   return result;
 }
 
-export function validateUnion(ast: UbershapeAst, union: Union): Error[] {
-  const result: Error[] = [];
+export function validateUnion(
+  ast: UbershapeAst,
+  union: Union
+): UbershapeValidationError[] {
+  const result: UbershapeValidationError[] = [];
   const memo: { [key: string]: boolean } = {};
   if (union.types.length === 0) {
     result.push(new UbershapeEmptyDefError(union));
@@ -103,8 +114,11 @@ export function validateUnion(ast: UbershapeAst, union: Union): Error[] {
   return result;
 }
 
-export function validateRecord(ast: UbershapeAst, record: Record): Error[] {
-  const result: Error[] = [];
+export function validateRecord(
+  ast: UbershapeAst,
+  record: Record
+): UbershapeValidationError[] {
+  const result: UbershapeValidationError[] = [];
   const memo: { [key: string]: boolean } = {};
   if (record.fields.length === 0) {
     result.push(new UbershapeEmptyDefError(record));
@@ -124,50 +138,80 @@ export function validateRecord(ast: UbershapeAst, record: Record): Error[] {
   return result;
 }
 
-export class UbershapeEmptyDefError extends Error {
-  constructor(public def: Def) {
+export type UbershapeValidationError =
+  | UbershapeEmptyDefError
+  | UbershapeRootNotExistError
+  | UbershapeTooManyRootError
+  | UbershapeDuplicateDefError
+  | UbershapeDefDuplicateTypeError
+  | UbershapeDefDuplicateEnumValueError
+  | UbershapeRecordDuplicateFieldNameError
+  | UbershapeReferenceError
+;
+
+export { ErrorType as UbershapeValidationErrorType }
+const enum ErrorType {
+  EmptyDef,
+  RootNotExist,
+  TooManyRoot,
+  DuplicateDef,
+  DefDuplicateType,
+  DefDuplicateEnumValue,
+  RecordDuplicateFieldName,
+  Reference,
+}
+
+export { ErrorBase as UbershapeValidationErrorBase }
+abstract class ErrorBase<TErrorType extends ErrorType> extends Error {
+  constructor(public errorType: TErrorType) {
     super();
   }
 }
 
-export class UbershapeRootNotExistError extends Error {
+export class UbershapeEmptyDefError extends ErrorBase<ErrorType.EmptyDef> {
+  constructor(public def: Def) {
+    super(ErrorType.EmptyDef);
+  }
+}
+
+export class UbershapeRootNotExistError extends ErrorBase<ErrorType.RootNotExist> {
   constructor() {
-    super();
+    super(ErrorType.RootNotExist);
   }
 }
 
-export class UbershapeTooManyRootError extends Error {
+export class UbershapeTooManyRootError extends ErrorBase<ErrorType.TooManyRoot> {
   constructor(public roots: Root[]) {
-    super();
+    super(ErrorType.TooManyRoot);
   }
 }
 
-export class UbershapeDuplicateDefError extends Error {
+export class UbershapeDuplicateDefError extends ErrorBase<ErrorType.DuplicateDef> {
   constructor(public def: Def) {
-    super();
+    super(ErrorType.DuplicateDef);
   }
 }
 
-export class UbershapeDefDuplicateTypeError extends Error {
+export class UbershapeDefDuplicateTypeError extends ErrorBase<ErrorType.DefDuplicateType> {
   constructor(public type: Type) {
-    super();
+    super(ErrorType.DefDuplicateType);
   }
 }
 
-export class UbershapeDefDuplicateEnumValueError extends Error {
+export class UbershapeDefDuplicateEnumValueError extends ErrorBase<ErrorType.DefDuplicateEnumValue> {
   constructor(public enumValue: EnumValue) {
-    super();
+    super(ErrorType.DefDuplicateEnumValue);
   }
 }
 
-export class UbershapeRecordDuplicateFieldNameError extends Error {
+export class UbershapeRecordDuplicateFieldNameError extends ErrorBase<ErrorType.RecordDuplicateFieldName> {
   constructor(public fieldName: Token) {
-    super();
+    super(ErrorType.RecordDuplicateFieldName);
   }
 }
 
-export class UbershapeReferenceError extends Error {
+export class UbershapeReferenceError extends ErrorBase<ErrorType.Reference> {
   constructor(public type: Type) {
-    super();
+    super(ErrorType.Reference);
   }
 }
