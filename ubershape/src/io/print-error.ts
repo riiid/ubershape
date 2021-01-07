@@ -11,7 +11,7 @@ import {
 } from '../ubershape';
 import { ReadResult } from './read-schema';
 import { Span } from '../parser/recursive-descent-parser';
-import { Def } from '../parser/ast';
+import { Def, Select } from '../parser/ast';
 
 export function printError(
   error: UbershapeValidationError | SubshapeValidationError,
@@ -117,6 +117,49 @@ const ubershapeValidationErrorPrinters: UbershapeValidationErrorPrinters = {
   },
 };
 
+const subshapeValidationErrorPrinters: SubshapeValidationErrorPrinters = {
+  [SubshapeValidationErrorType.SelectReference](error, println, printAroundText) {
+    println('');
+    printSelect(error.select, printAroundText);
+    println('');
+    println('there is no such type.');
+  },
+  [SubshapeValidationErrorType.OrphanSelect](error, println, printAroundText) {
+    println('');
+    printSelect(error.select, printAroundText);
+    println('');
+    println('this select statement is useless.');
+  },
+  [SubshapeValidationErrorType.SelectRequired](error, println) {
+    println('');
+    if (error.def.kind === 'root') {
+      println('the select for root is missing.');
+    } else {
+      const kind = error.def.kind;
+      const def = error.def.name.text;
+      println(`the select for ${kind} ${def} is missing.`);
+    }
+  },
+  [SubshapeValidationErrorType.FieldSelectorReference](error, println, printAroundText) {
+    println('');
+    printAroundText(error.fieldSelector.fieldName);
+    println('');
+    println('there is no such field.');
+  },
+  [SubshapeValidationErrorType.TypeSelectorReference](error, println, printAroundText) {
+    println('');
+    printAroundText(error.typeSelector.type);
+    println('');
+    println('there is no such type.');
+  },
+  [SubshapeValidationErrorType.ValueSelectorReference](error, println, printAroundText) {
+    println('');
+    printAroundText(error.valueSelector.valueName);
+    println('');
+    println('there is no such value.');
+  },
+};
+
 function printDef(def: Def, printAroundText: PrintAroundTextFn) {
   switch (def.kind) {
     case 'root':
@@ -126,23 +169,11 @@ function printDef(def: Def, printAroundText: PrintAroundTextFn) {
   }
 }
 
-const subshapeValidationErrorPrinters: SubshapeValidationErrorPrinters = {
-  [SubshapeValidationErrorType.SelectReference](error, println, printAroundText) {
-    // TODO
-  },
-  [SubshapeValidationErrorType.OrphanSelect](error, println, printAroundText) {
-    // TODO
-  },
-  [SubshapeValidationErrorType.SelectRequired](error, println, printAroundText) {
-    // TODO
-  },
-  [SubshapeValidationErrorType.FieldSelectorReference](error, println, printAroundText) {
-    // TODO
-  },
-  [SubshapeValidationErrorType.TypeSelectorReference](error, println, printAroundText) {
-    // TODO
-  },
-  [SubshapeValidationErrorType.ValueSelectorReference](error, println, printAroundText) {
-    // TODO
-  },
-};
+function printSelect(select: Select, printAroundText: PrintAroundTextFn) {
+  switch (select.kind) {
+    case 'select-root':
+      printAroundText({ start: select.start, end: select.start + 11 }); break;
+    case 'select-union': case 'select-enum': case 'select-record':
+      printAroundText(select.typeName); break;
+  }
+}

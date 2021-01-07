@@ -2,10 +2,10 @@ import { parse as parseUbershape } from './parser/ubershape';
 import { parse as parseSubshape } from './parser/subshape';
 import {
   validateSubshape,
-  SubshapeFieldSelectorReferenceError,
   SubshapeOrphanSelectError,
   SubshapeSelectReferenceError,
   SubshapeSelectRequiredError,
+  SubshapeFieldSelectorReferenceError,
   SubshapeTypeSelectorReferenceError,
   SubshapeValueSelectorReferenceError,
 } from './subshape';
@@ -35,11 +35,82 @@ test('validate', () => {
     ubershapeSample,
     `
       use 'ubershape sample'
+      select root
+        > foo
+      select union foo
+        | foo-a
+      select enum bar
+        | #bar-a
+    `,
+    SubshapeOrphanSelectError,
+    1
+  );
+});
+
+test('validate', () => {
+  expectError(
+    ubershapeSample,
+    `
+      use 'ubershape sample'
+      select root
+        > foo
+      select union fooooo
+        | foo-a
+    `,
+    SubshapeSelectReferenceError,
+    1
+  );
+});
+
+test('validate', () => {
+  expectError(
+    ubershapeSample,
+    `
+      use 'ubershape sample'
+    `,
+    SubshapeSelectRequiredError,
+    1
+  );
+});
+
+test('validate', () => {
+  expectError(
+    ubershapeSample,
+    `
+      use 'ubershape sample'
       select record baz {
         baz-c
       }
     `,
     SubshapeFieldSelectorReferenceError,
+    1
+  );
+});
+
+test('validate', () => {
+  expectError(
+    ubershapeSample,
+    `
+      use 'ubershape sample'
+      select root
+        > fooooo
+    `,
+    SubshapeTypeSelectorReferenceError,
+    1
+  );
+});
+
+test('validate', () => {
+  expectError(
+    ubershapeSample,
+    `
+      use 'ubershape sample'
+      select root
+        > bar
+      select enum bar
+        | #bar-c
+    `,
+    SubshapeValueSelectorReferenceError,
     1
   );
 });

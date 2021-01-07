@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "dev": "ultra -r dev",
-    "build": "ultra -r -b build"
+    "build": "ultra -r -b build",
+    "test": "ultra -r test",
+    "test:watch": "ultra -r test:watch"
   },
   "dependencies": {
     "ultra-runner": "^3.5.0"

@@ -33,6 +33,18 @@ export function validateUbershape(
   return result;
 }
 
+export interface UbershapeDefTable {
+  [typeName: string]: Def;
+}
+export function getDefTable(ast: UbershapeAst): UbershapeDefTable {
+  const result: UbershapeDefTable = {};
+  for (const def of ast.defs) {
+    if (def.kind === 'root') continue;
+    result[def.name.text] = def;
+  }
+  return result;
+}
+
 export function findDefByType(ast: UbershapeAst, typeName: string): Def | undefined {
   for (const def of ast.defs) {
     if (def.kind === 'root') continue;

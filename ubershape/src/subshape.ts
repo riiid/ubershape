@@ -1,6 +1,6 @@
-import { Def, EnumValueSelector, FieldSelector, Select, SubshapeAst, TypeSelector, UbershapeAst } from './parser/ast';
+import { Def, EnumValue, EnumValueSelector, Field, FieldSelector, Select, SelectRoot, SubshapeAst, Type, TypeSelector, UbershapeAst } from './parser/ast';
 import { Span } from './parser/recursive-descent-parser';
-import { findDefByType, getRoot, UbershapeRootNotExistError } from './ubershape';
+import { findDefByType, getDefTable, getRoot, UbershapeDefTable, UbershapeRootNotExistError } from './ubershape';
 
 export function applySubshape(
   ubershapeAst: UbershapeAst,
@@ -98,7 +98,150 @@ export function validateSubshape(
   subshapeAst: SubshapeAst
 ): SubshapeValidationError[] {
   const result: SubshapeValidationError[] = [];
-  // TODO
+  validateSubshapePass1(ubershapeAst, subshapeAst, result);
+  validateSubshapePass2(ubershapeAst, subshapeAst, result);
+  return result;
+}
+/**
+ * 없는 참조를 선택하고 있지는 않은지 검사하는 패스
+ */
+function validateSubshapePass1(
+  ubershapeAst: UbershapeAst,
+  subshapeAst: SubshapeAst,
+  result: SubshapeValidationError[]
+): void {
+  const ubershapeDefTable = getDefTable(ubershapeAst);
+  const findDefBySelect = getFindDefBySelect(ubershapeAst, ubershapeDefTable);
+  for (const select of subshapeAst.selects) {
+    const def = findDefBySelect(select);
+    if (def == null) {
+      result.push(new SubshapeSelectReferenceError(select));
+      continue;
+    }
+    if (isSelectOfFieldSelectors(select)) {
+      const _def = def as { fields: Field[] };
+      for (const fieldSelector of select.fieldSelectors) {
+        const fieldNameText = fieldSelector.fieldName.text;
+        const field = _def.fields.find(field => field.name.text === fieldNameText);
+        if (field == null) {
+          result.push(new SubshapeFieldSelectorReferenceError(def, fieldSelector));
+        }
+      }
+    } else if (isSelectOfTypeSelectors(select)) {
+      const _def = def as { types: Type[] };
+      for (const typeSelector of select.typeSelectors) {
+        const typeText = typeSelector.type.text;
+        const type = _def.types.find(type => type.type.text === typeText);
+        if (type == null) {
+          result.push(new SubshapeTypeSelectorReferenceError(def, typeSelector));
+        }
+      }
+    } else if (isSelectOfEnumValueSelectors(select)) {
+      const _def = def as { values: EnumValue[] };
+      for (const valueSelector of select.valueSelectors) {
+        const valueNameText = valueSelector.valueName.text;
+        const value = _def.values.find(value => value.name.text === valueNameText);
+        if (value == null) {
+          result.push(new SubshapeValueSelectorReferenceError(def, valueSelector));
+        }
+      }
+    }
+  }
+}
+/**
+ * 필요한데 선택하지 않은건 없는지,
+ * 안 필요한데 선택한건 없는지 검사하는 패스
+ */
+function validateSubshapePass2(
+  ubershapeAst: UbershapeAst,
+  subshapeAst: SubshapeAst,
+  result: SubshapeValidationError[]
+): void {
+  const selectRoot = getSelectRoot(subshapeAst);
+  if (selectRoot == null) {
+    const root = getRoot(ubershapeAst);
+    if (root) result.push(new SubshapeSelectRequiredError(root));
+    return;
+  }
+  const notVisitedSelects = new Set(
+    subshapeAst.selects.filter(select => select.kind !== 'select-root')
+  );
+  interface SelectRequest {
+    requiredTypeName: string;
+    selector?: TypeSelector | FieldSelector | EnumValueSelector;
+  }
+  const selectRequests: SelectRequest[] = selectRoot.typeSelectors.map(
+    typeSelector => ({ requiredTypeName: typeSelector.type.text })
+  );
+  const ubershapeDefTable = getDefTable(ubershapeAst);
+  const subshapeSelectTable = getSelectTable(subshapeAst);
+  let currSelectRequest: SelectRequest | undefined;
+  while (currSelectRequest = selectRequests.pop()) {
+    const { requiredTypeName, selector } = currSelectRequest;
+    const def = ubershapeDefTable[requiredTypeName];
+    const select = subshapeSelectTable[requiredTypeName];
+    if (select == null) {
+      if (def != null) {
+        result.push(new SubshapeSelectRequiredError(def, selector));
+      } // else cases are already handled by pass1
+      continue;
+    }
+    notVisitedSelects.delete(select);
+    if (isSelectOfFieldSelectors(select)) {
+      const _def = def as { fields: Field[] };
+      for (const fieldSelector of select.fieldSelectors) {
+        const fieldNameText = fieldSelector.fieldName.text;
+        const field = _def.fields.find(field => field.name.text === fieldNameText);
+        if (field == null) continue; // already handled by pass1
+        selectRequests.push({
+          requiredTypeName: field.type.type.text,
+          selector: fieldSelector,
+        });
+      }
+    } else if (isSelectOfTypeSelectors(select)) {
+      for (const typeSelector of select.typeSelectors) {
+        selectRequests.push({
+          requiredTypeName: typeSelector.type.text,
+          selector: typeSelector,
+        });
+      }
+    }
+  }
+  for (const notVisitedSelect of notVisitedSelects) {
+    result.push(new SubshapeOrphanSelectError(notVisitedSelect));
+  }
+}
+function getFindDefBySelect(
+  ubershapeAst: UbershapeAst,
+  ubershapeDefTable: UbershapeDefTable = getDefTable(ubershapeAst)
+): (select: Select) => Def | undefined {
+  return (select: Select) => {
+    if (select.kind === 'select-root') return getRoot(ubershapeAst);
+    return ubershapeDefTable[select.typeName.text];
+  };
+}
+function isSelectOfFieldSelectors(select: Select): select is Select & { fieldSelectors: FieldSelector[] } {
+  return 'fieldSelectors' in select;
+}
+function isSelectOfTypeSelectors(select: Select): select is Select & { typeSelectors: TypeSelector[] } {
+  return 'typeSelectors' in select;
+}
+function isSelectOfEnumValueSelectors(select: Select): select is Select & { valueSelectors: EnumValueSelector[] } {
+  return 'valueSelectors' in select;
+}
+
+function getSelectRoot(ast: SubshapeAst): SelectRoot | undefined {
+  for (const select of ast.selects) if (select.kind === 'select-root') return select;
+}
+interface SubshapeSelectTable {
+  [typeName: string]: Select;
+}
+function getSelectTable(ast: SubshapeAst): SubshapeSelectTable {
+  const result: SubshapeSelectTable = {};
+  for (const select of ast.selects) {
+    if (select.kind === 'select-root') continue;
+    result[select.typeName.text] = select;
+  }
   return result;
 }
 
@@ -108,6 +251,7 @@ export type SubshapeValidationError =
   | SubshapeSelectRequiredError
   | SubshapeFieldSelectorReferenceError
   | SubshapeTypeSelectorReferenceError
+  | SubshapeValueSelectorReferenceError
 ;
 
 export { ErrorType as SubshapeValidationErrorType }
@@ -140,7 +284,10 @@ export class SubshapeOrphanSelectError extends ErrorBase<ErrorType.OrphanSelect>
 }
 
 export class SubshapeSelectRequiredError extends ErrorBase<ErrorType.SelectRequired> {
-  constructor(public def: Def, public selector: TypeSelector | FieldSelector) {
+  /**
+   * @param selector 어디에서 참조됐기 때문에 해당 타입에 대한 Select가 필요한지를 알려주기 위한 정보입니다.
+   */
+  constructor(public def: Def, public selector?: TypeSelector | FieldSelector | EnumValueSelector) {
     super(ErrorType.SelectRequired);
   }
 }

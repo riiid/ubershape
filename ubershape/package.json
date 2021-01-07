@@ -1,6 +1,6 @@
 {
   "name": "ubershape",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "lib/index.js",
   "bin": "lib/cli/index.js",
   "license": "(MIT OR Apache-2.0)",
@@ -8,7 +8,8 @@
     "build": "rm -rf ./lib & tsc",
     "dev": "sucrase-node src/index.ts",
     "cli": "tsc && node ./lib/cli",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "dependencies": {
     "mkdirp": "^1.0.4",
