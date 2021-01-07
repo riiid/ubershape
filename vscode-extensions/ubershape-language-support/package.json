@@ -1,25 +1,50 @@
 {
-    "name": "ubershape-language-support",
-    "displayName": "Ubershape Language Support",
-    "description": "Language Support for Ubershape.",
-    "version": "0.0.1",
-    "engines": {
-        "vscode": "^1.51.0"
-    },
-    "categories": [
-        "Programming Languages"
+  "name": "ubershape-language-support",
+  "displayName": "Ubershape Language Support",
+  "description": "Language Support for Ubershape.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.51.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ubershape",
+        "aliases": [
+          "Ubershape",
+          "ubershape"
+        ],
+        "extensions": [
+          "ubershape"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "subshape",
+        "aliases": [
+          "Subshape",
+          "subshape"
+        ],
+        "extensions": [
+          "subshape"
+        ],
+        "configuration": "./language-configuration.json"
+      }
     ],
-    "contributes": {
-        "languages": [{
-            "id": "ubershape",
-            "aliases": ["Ubershape", "ubershape"],
-            "extensions": ["ubershape"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "ubershape",
-            "scopeName": "source.ubershape",
-            "path": "./syntaxes/ubershape.tmLanguage.json"
-        }]
-    }
+    "grammars": [
+      {
+        "language": "ubershape",
+        "scopeName": "source.ubershape",
+        "path": "./syntaxes/ubershape.tmLanguage.json"
+      },
+      {
+        "language": "subshape",
+        "scopeName": "source.subshape",
+        "path": "./syntaxes/subshape.tmLanguage.json"
+      }
+    ]
+  }
 }

@@ -1,64 +1,199 @@
 {
-    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "Ubershape",
-    "patterns": [
-        {
-            "include": "#keywords"
-        },
-        {
-            "include": "#comment"
-        },
-        {
-            "include": "#meta"
-        }
-    ],
-    "repository": {
-        "keywords": {
-            "patterns": [{
-                "name": "keyword.define.ubershape",
-                "match": "\\b(root|record|union|enum)\\b"
-            }]
-        },
-        "meta": {
-            "match": "\\{|\\}",
-            "name": "meta.brace.curly.js"
-        },
-        "comment": {
-            "name": "comment.ubershape",
-            "patterns": [
-                {
-                    "name": "comment.block.documentation.ubershape",
-                    "begin": "/\\*\\*(?!/)",
-                    "end": "\\*/",
-                    "captures": {
-                        "0": {
-                            "name": "punctuation.definition.comment.ubershape"
-                        }
-                    }
-                },
-                {
-                    "begin": "(^[ \\t]+)?(?=//)",
-                    "beginCaptures": {
-                        "1": {
-                            "name": "punctuation.whitespace.comment.leading.ubershape"
-                        }
-                    },
-                    "end": "(?!\\G)",
-                    "patterns": [
-                        {
-                            "begin": "//",
-                            "beginCaptures": {
-                                "0": {
-                                    "name": "punctuation.definition.comment.ubershape"
-                                }
-                            },
-                            "end": "\\n",
-                            "name": "comment.line.double-slash.ubershape"
-                        }
-                    ]
-                }
-            ]
-        }
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Ubershape",
+  "patterns": [
+    {
+      "include": "#def"
     },
-    "scopeName": "source.ubershape"
+    {
+      "include": "#keyword"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "def": {
+      "patterns": [
+        {
+          "include": "#root"
+        },
+        {
+          "include": "#union"
+        },
+        {
+          "include": "#enum"
+        },
+        {
+          "include": "#record"
+        }
+      ]
+    },
+    "root": {
+      "name": "meta.root.ubershape",
+      "begin": "\\b(root)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.root.ubershape"
+        }
+      },
+      "end": "(?=^\\s*(?:root|record|union|enum)\\b)",
+      "patterns": [
+        {
+          "include": "#root-type"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "record": {
+      "name": "meta.record.ubershape",
+      "begin": "\\b(record)\\s+([a-zA-Z0-9\\-]+)\\s*({)",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.record.ubershape"
+        },
+        "2": {
+          "name": "entity.name.type.record.ubershape"
+        },
+        "3": {
+          "name": "punctuation.definition.block.ubershape"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.block.ubershape"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#record-field"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "union": {
+      "name": "meta.union.ubershape",
+      "begin": "\\b(union)\\s+([a-zA-Z0-9\\-]+)",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.union.ubershape"
+        },
+        "2": {
+          "name": "entity.name.type.record.ubershape"
+        }
+      },
+      "end": "(?=^\\s*(?:root|record|union|enum)\\b)",
+      "patterns": [
+        {
+          "include": "#union-type"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "enum": {
+      "name": "meta.enum.ubershape",
+      "begin": "\\b(enum)\\s+([a-zA-Z0-9\\-]+)",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.enum.ubershape"
+        },
+        "2": {
+          "name": "entity.name.type.record.ubershape"
+        }
+      },
+      "end": "(?=^\\s*(?:root|record|union|enum)\\b)",
+      "patterns": [
+        {
+          "include": "#enum-value"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "root-type": {
+      "match": "(>)\\s*([a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.ubershape"
+        },
+        "2": {
+          "name": "support.type.ubershape"
+        }
+      }
+    },
+    "record-field": {
+      "match": "\\b([a-zA-Z0-9\\-]+)\\s*:\\s*([a-zA-Z0-9\\-]+)\\s*(?:\\[\\])?",
+      "captures": {
+        "1": {
+          "name": "variable.other.field.ubershape"
+        },
+        "2": {
+          "name": "support.type.ubershape"
+        }
+      }
+    },
+    "union-type": {
+      "match": "(\\|)\\s*([a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.ubershape"
+        },
+        "2": {
+          "name": "support.type.ubershape"
+        }
+      }
+    },
+    "enum-value": {
+      "match": "(\\|)\\s*(#[a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.ubershape"
+        },
+        "2": {
+          "name": "variable.other.enummember.ubershape"
+        }
+      }
+    },
+    "keyword": {
+      "name": "keyword.define.ubershape",
+      "match": "\\b(root|record|union|enum)\\b"
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.ubershape",
+          "begin": "/\\*\\*(?!/)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.ubershape"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.ubershape"
+            }
+          }
+        },
+        {
+          "name": "comment.block.ubershape",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.ubershape",
+          "match": "//.*"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.ubershape"
 }

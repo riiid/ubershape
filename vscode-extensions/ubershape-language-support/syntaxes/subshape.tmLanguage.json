@@ -1,0 +1,218 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Subshape",
+  "patterns": [
+    {
+      "include": "#use"
+    },
+    {
+      "include": "#select"
+    },
+    {
+      "include": "#keyword"
+    },
+    {
+      "include": "#comment"
+    }
+  ],
+  "repository": {
+    "use": {
+      "match": "\\b(use)\\s*('[^']*')",
+      "captures": {
+        "1": {
+          "name": "keyword.control.use.subshape"
+        },
+        "2": {
+          "name": "string.path.subshape"
+        }
+      }
+    },
+    "select": {
+      "patterns": [
+        {
+          "include": "#select-root"
+        },
+        {
+          "include": "#select-union"
+        },
+        {
+          "include": "#select-enum"
+        },
+        {
+          "include": "#select-record"
+        }
+      ]
+    },
+    "select-root": {
+      "name": "meta.root.subshape",
+      "begin": "\\b(select)\\s+(root)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.select.subshape"
+        },
+        "2": {
+          "name": "storage.type.root.subshape"
+        }
+      },
+      "end": "(?=^\\s*select\\b)",
+      "patterns": [
+        {
+          "include": "#root-type-selector"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "select-record": {
+      "name": "meta.record.subshape",
+      "begin": "\\b(select)\\s+(record)\\s+([a-zA-Z0-9\\-]+)\\s*({)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.select.subshape"
+        },
+        "2": {
+          "name": "storage.type.record.subshape"
+        },
+        "3": {
+          "name": "entity.name.type.record.subshape"
+        },
+        "4": {
+          "name": "punctuation.definition.block.subshape"
+        }
+      },
+      "end": "\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.block.subshape"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#record-field-selector"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "select-union": {
+      "name": "meta.union.subshape",
+      "begin": "\\b(select)\\s+(union)\\s+([a-zA-Z0-9\\-]+)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.select.subshape"
+        },
+        "2": {
+          "name": "storage.type.union.subshape"
+        },
+        "3": {
+          "name": "entity.name.type.record.subshape"
+        }
+      },
+      "end": "(?=^\\s*select\\b)",
+      "patterns": [
+        {
+          "include": "#union-type-selector"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "select-enum": {
+      "name": "meta.enum.subshape",
+      "begin": "\\b(select)\\s+(enum)\\s+([a-zA-Z0-9\\-]+)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.select.subshape"
+        },
+        "2": {
+          "name": "storage.type.enum.subshape"
+        },
+        "3": {
+          "name": "entity.name.type.record.subshape"
+        }
+      },
+      "end": "(?=^\\s*select\\b)",
+      "patterns": [
+        {
+          "include": "#enum-value-selector"
+        },
+        {
+          "include": "#comment"
+        }
+      ]
+    },
+    "root-type-selector": {
+      "match": "(>)\\s*([a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.subshape"
+        },
+        "2": {
+          "name": "support.type.subshape"
+        }
+      }
+    },
+    "record-field-selector": {
+      "name": "variable.other.field.subshape",
+      "match": "([a-zA-Z0-9\\-]+)"
+    },
+    "union-type-selector": {
+      "match": "(\\|)\\s*([a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.subshape"
+        },
+        "2": {
+          "name": "support.type.subshape"
+        }
+      }
+    },
+    "enum-value-selector": {
+      "match": "(\\|)\\s*(#[a-zA-Z0-9\\-]+)",
+      "captures": {
+        "1": {
+          "name": "punctuation.separator.subshape"
+        },
+        "2": {
+          "name": "variable.other.enummember.subshape"
+        }
+      }
+    },
+    "keyword": {
+      "name": "keyword.define.subshape",
+      "match": "\\b(use|select|root|record|union|enum)\\b"
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.subshape",
+          "begin": "/\\*\\*(?!/)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.subshape"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.subshape"
+            }
+          }
+        },
+        {
+          "name": "comment.block.subshape",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.subshape",
+          "match": "//.*"
+        }
+      ]
+    }
+  },
+  "scopeName": "source.subshape"
+}
