@@ -58,6 +58,11 @@ export function schema2js(schema: Schema): JsAndDts {
     jsBuffer.push(js);
     dtsBuffer.push(dts);
   }
+  {
+    const { js, dts } = schema2VisitorJs(schema);
+    jsBuffer.push(js);
+    dtsBuffer.push(dts);
+  }
   return {
     js: jsBuffer.join(''),
     dts: dtsBuffer.join(''),
@@ -265,4 +270,115 @@ function enum2js(schema: Schema, enumDef: Enum): JsAndDts {
       export function is${typeName}(value: any): value is ${typeName};
     `,
   };
+}
+
+function schema2VisitorJs(schema: Schema): JsAndDts {
+  const _exhaustiveCheck = (x: never): never => {
+    throw new Error('exhuastive check failure');
+  }
+  const recordAndUnions = schema.shape.defs.filter(
+    def => def.kind !== 'root'
+  ) as Exclude<Def, Root>[];
+  return {
+    js: `
+      exports.visitor = {
+        ${recordAndUnions.map(def => {
+          switch (def.kind) {
+            case 'record':
+              return record2VisitorJs(schema, def).js;
+            case 'union':
+              return union2VisitorJs(schema, def).js;
+            case 'enum':
+              return enum2VisitorJs(schema, def).js;
+            default:
+              return _exhaustiveCheck(def);
+          }
+        }).filter(Boolean).join(',\n')}
+      };
+    `,
+    dts: `
+      export interface Visitor {
+        ${recordAndUnions.map(def => {
+          switch (def.kind) {
+            case 'record':
+              return record2VisitorJs(schema, def).dts;
+            case 'union':
+              return union2VisitorJs(schema, def).dts;
+            case 'enum':
+              return enum2VisitorJs(schema, def).dts;
+            default:
+              return _exhaustiveCheck(def);
+          }
+        }).filter(Boolean).join('\n')}
+      }
+      export const visitor: Visitor;
+    `,
+  }
+}
+
+function record2VisitorJs(schema: Schema, record: Record): JsAndDts {
+  const recordName = typeName2Js(schema, record.name);
+  const singleRecordFields = record.fields.filter(
+    field => !field.type.multiple
+  ).filter(
+    field => schema.shape.defs.find(
+      def => (def.kind === 'record' || def.kind === 'union' || def.kind === 'enum') && def.name.text === field.type.type.text
+    ) != null
+  );
+  const multipleFields = record.fields.filter(field => field.type.multiple);
+  return {
+    js: `
+      visit${recordName}(visitor, _value) {
+        const value = {..._value};
+        ${[
+          ...singleRecordFields.map(field => `
+        if (value['${field.name.text}'] != null) {
+          value['${field.name.text}'] = visitor.visit${typeName2Js(schema, field.type.type)}(visitor, value['${field.name.text}'])
+        }
+          `),
+          ...multipleFields.map(field => `
+        if (value['${field.name.text}'] != null) {
+          value['${field.name.text}'] = value['${field.name.text}'].map(x => visitor.visit${typeName2Js(schema, field.type.type)}(visitor, x))
+        }
+          `)
+        ].join('\n')}
+        return value;
+      }`,
+    dts: `
+      visit${recordName}(visitor: Visitor, value: ${recordName}): ${recordName};
+    `
+  };
+}
+
+function union2VisitorJs(schema: Schema, union: Union): JsAndDts {
+  const unionName = typeName2Js(schema, union.name);
+  return {
+    js:`
+      visit${unionName}(visitor, value) {
+        switch (value[0]) {
+          ${union.types.map(type => (`
+          case '${type.type.text}':
+            return [value[0], visitor.visit${typeName2Js(schema, type.type)}(visitor, value[1])];
+          `)).join('\n')}
+          default:
+            return value;
+        }
+      }`,
+    dts:`
+      visit${unionName}(visitor: Visitor, value: ${unionName}): ${unionName};
+    `
+  }
+}
+
+function enum2VisitorJs(schema: Schema, enumDef: Enum): JsAndDts {
+  const enumName = typeName2Js(schema, enumDef.name);
+  return {
+    js:`
+      visit${enumName}(visitor, value) {
+        return value;
+      }`,
+    dts:`
+      visit${enumName}(visitor: Visitor, value: ${enumName}): ${enumName};
+    `
+  }
 }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as mkdirp from 'mkdirp';
 import * as path from 'path';
 import { Schema, SubshapeSchema, UbershapeSchema } from '../schema';
@@ -14,6 +15,14 @@ test('enum', () => {
   const rrtv2 = getRrtv2();
   expect(rrtv2.isHeadingLevel('#h1')).toBe(true);
   expect(rrtv2.isHeadingLevel('#h0')).toBe(false);
+});
+
+test('visitor', () => {
+  const rrtv2 = getRrtv2();
+  const visitor = rrtv2.visitor;
+  const jsonText = fs.readFileSync(path.join(fixtureDir, 'riiid-rich-text-v2.json')).toString();
+  const documentSections = JSON.parse(jsonText);
+  expect(documentSections).toStrictEqual(visitor.visitDocumentSections(visitor, documentSections));
 });
 
 function getRrtv2() {

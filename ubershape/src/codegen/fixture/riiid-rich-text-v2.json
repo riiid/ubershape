@@ -1,0 +1,59 @@
+{
+  "children": [
+    {
+      "children": [
+        [
+          "heading",
+          {
+            "level": "#h1",
+            "align": "#justify",
+            "children": [
+              [
+                "text",
+                {
+                  "value": "string",
+                  "weight": "#w100",
+                  "italic": true
+                }
+              ]
+            ]
+          }
+        ],
+        [
+          "table",
+          {
+            "head": {
+              "rows": [
+                {
+                  "cells": [
+                    {
+                      "children": [
+                        [
+                          "heading",
+                          {
+                            "level": "#h1",
+                            "align": "#justify",
+                            "children": [
+                              [
+                                "text",
+                                {
+                                  "value": "string",
+                                  "weight": "#w100",
+                                  "italic": true
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    }
+  ]
+}
