@@ -31,6 +31,7 @@ union block-element
     | precalculated-line-numbered-area
     | dialog-list
     | note
+    | table
 
 /**
  * 인라인 엘리먼트
@@ -39,10 +40,10 @@ union inline-element
     | text
     | math-expression
     | image
-    | table
     | point
     | refer-to
     | referred-by
+    | blank
 
 union math-expression
     | tex
@@ -91,6 +92,8 @@ record dialog-list {
 }
 record dialog {
     children: inline-element[]
+    by: string
+    at: string
 }
 
 /**
@@ -103,6 +106,9 @@ record text {
     underline: boolean
     strike: boolean
     supsub: supsub
+    color: string
+    font-size: string
+    font-family: string
 }
 
 /**
@@ -168,6 +174,13 @@ record referred-by {
 
 record note {
     children: inline-element[]
+}
+
+record blank {
+    /**
+     * index of the blank among all the blanks in the passage (starting from 1)
+     */
+    number: number
 }
 
 enum realtor-table-cell-background
