@@ -1,5 +1,5 @@
-import { Type } from './ast';
-import { RecursiveDescentParser, Token } from './recursive-descent-parser';
+import { Type } from "./ast.ts";
+import { RecursiveDescentParser, Token } from "./recursive-descent-parser.ts";
 
 export const whitespacePattern = /^\s+/;
 export const kebabCasePattern = /^[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z0-9]+)*/;
@@ -27,15 +27,23 @@ export function parseWhitespace(parser: RecursiveDescentParser) {
 }
 
 export function parseType(parser: RecursiveDescentParser, expect: true): Type;
-export function parseType(parser: RecursiveDescentParser, expect: false): Type | undefined;
-export function parseType(parser: RecursiveDescentParser, expect: boolean): Type | undefined {
-  const type = expect ? parser.expect(kebabCasePattern) : parser.accept(kebabCasePattern);
+export function parseType(
+  parser: RecursiveDescentParser,
+  expect: false,
+): Type | undefined;
+export function parseType(
+  parser: RecursiveDescentParser,
+  expect: boolean,
+): Type | undefined {
+  const type = expect
+    ? parser.expect(kebabCasePattern)
+    : parser.accept(kebabCasePattern);
   if (!type) return;
   parseWhitespace(parser);
-  const multipleStart = parser.accept('[');
+  const multipleStart = parser.accept("[");
   if (multipleStart) {
     parseWhitespace(parser);
-    const multipleEnd = parser.expect(']');
+    const multipleEnd = parser.expect("]");
     return {
       start: type.start,
       end: multipleEnd.end,

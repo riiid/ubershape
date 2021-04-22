@@ -5,7 +5,11 @@ export interface RecursiveDescentParser {
   getAroundText: (loc: number, length?: number, window?: number) => string;
   try(pattern: Pattern): Token | undefined;
   accept(pattern: Pattern): Token | undefined;
-  expect(acceptPattern: Pattern, expectedPatterns?: Pattern[], mistakePatterns?: Pattern[]): Token;
+  expect(
+    acceptPattern: Pattern,
+    expectedPatterns?: Pattern[],
+    mistakePatterns?: Pattern[],
+  ): Token;
 }
 export interface RecursiveDescentParserConfig {
   debug: boolean;
@@ -22,24 +26,25 @@ export interface Token extends Span {
   text: string;
 }
 export type Pattern = string | RegExp | typeof eof;
-export const eof = Symbol('<EOF>');
+export const eof = Symbol("<EOF>");
 export function createRecursiveDescentParser(
   input: string,
-  config?: Partial<RecursiveDescentParserConfig>
+  config?: Partial<RecursiveDescentParserConfig>,
 ): RecursiveDescentParser {
   const debug = !!config?.debug;
   let cnt = 0;
-  const lines = input.split('\n');
+  const lines = input.split("\n");
   const parser: RecursiveDescentParser = {
     input,
     loc: 0,
-    offsetToColRow: offset => offsetToColRow(lines, offset),
-    getAroundText: (loc, length, window) => getAroundText(
-      lines,
-      loc,
-      length,
-      window
-    ),
+    offsetToColRow: (offset) => offsetToColRow(lines, offset),
+    getAroundText: (loc, length, window) =>
+      getAroundText(
+        lines,
+        loc,
+        length,
+        window,
+      ),
     try(pattern) {
       const loc = parser.loc;
       try {
@@ -52,15 +57,15 @@ export function createRecursiveDescentParser(
       cnt++;
       if (cnt > input.length * 5) throw `infinite loop`;
       if (pattern === eof) return acceptEof();
-      if (typeof pattern === 'string') return acceptString(pattern);
+      if (typeof pattern === "string") return acceptString(pattern);
       return acceptRegex(pattern);
     },
     expect(acceptPattern, expectedPatterns, mistakePatterns) {
       const result = parser.accept(acceptPattern);
       const _expectedPatterns: Pattern[] = (
-        expectedPatterns ?
-        [acceptPattern, ...expectedPatterns] :
-        [acceptPattern]
+        expectedPatterns
+          ? [acceptPattern, ...expectedPatterns]
+          : [acceptPattern]
       );
       if (result == null) {
         throw new SyntaxError(parser, _expectedPatterns, mistakePatterns);
@@ -71,7 +76,7 @@ export function createRecursiveDescentParser(
   };
   function acceptEof(): Token | undefined {
     if (parser.loc < input.length) return;
-    return { start: parser.loc, end: parser.loc, text: '' };
+    return { start: parser.loc, end: parser.loc, text: "" };
   }
   function acceptString(pattern: string): Token | undefined {
     const start = parser.loc;
@@ -106,7 +111,9 @@ export class SyntaxError extends Error {
     const colRow = this.colRow;
     const got = this.got;
     const length = got === eof ? 1 : got.length;
-    const expectedPatternsText = expectedPatterns.map(patternToString).join(' or ');
+    const expectedPatternsText = expectedPatterns.map(patternToString).join(
+      " or ",
+    );
     this.message = (
       `at line ${colRow.row + 1}, column ${colRow.col + 1}:\n\n` +
       `expected ${expectedPatternsText}, got ${patternToString(got)}\n\n` +
@@ -121,12 +128,14 @@ export class SyntaxError extends Error {
     }
     return parser.input.charAt(parser.loc) || eof;
   }
-  get colRow() { return this.parser.offsetToColRow(this.parser.loc); }
+  get colRow() {
+    return this.parser.offsetToColRow(this.parser.loc);
+  }
 }
 
 function patternToString(pattern: Pattern) {
-  if (pattern === eof) return '<EOF>';
-  if (typeof pattern === 'string') return JSON.stringify(pattern);
+  if (pattern === eof) return "<EOF>";
+  if (typeof pattern === "string") return JSON.stringify(pattern);
   return pattern.toString();
 }
 
@@ -149,7 +158,7 @@ function getAroundText(
   lines: string[],
   loc: number,
   length: number = 1,
-  window: number = 5
+  window: number = 5,
 ) {
   const colRow = offsetToColRow(lines, loc);
   const headCount = Math.min(1, (window >> 1) + (window % 2));
@@ -163,19 +172,23 @@ function getAroundText(
   const lineNumberDigitCount = tailEnd.toString().length;
   const headTexts = heads.map((line, index) => {
     const lineNumber = index + headStart + 1;
-    const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
-    return lineNumberText + ' | ' + line;
-  }).join('\n');
+    const lineNumberText = lineNumber.toString().padStart(
+      lineNumberDigitCount + 1,
+    );
+    return lineNumberText + " | " + line;
+  }).join("\n");
   const tailTexts = tails.map((line, index) => {
     const lineNumber = index + tailStart + 1;
-    const lineNumberText = lineNumber.toString().padStart(lineNumberDigitCount + 1);
-    return lineNumberText + ' | ' + line;
-  }).join('\n');
+    const lineNumberText = lineNumber.toString().padStart(
+      lineNumberDigitCount + 1,
+    );
+    return lineNumberText + " | " + line;
+  }).join("\n");
   return [
     headTexts,
-    (new Array(lineNumberDigitCount + 1 + 1)).join(' ') + ' | ' +
-    (new Array(colRow.col + 1)).join(' ') +
-    (new Array(length + 1)).join('^'),
-    tailTexts
-  ].join('\n');
+    (new Array(lineNumberDigitCount + 1 + 1)).join(" ") + " | " +
+    (new Array(colRow.col + 1)).join(" ") +
+    (new Array(length + 1)).join("^"),
+    tailTexts,
+  ].join("\n");
 }

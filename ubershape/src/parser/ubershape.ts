@@ -1,6 +1,21 @@
-import { Def, Enum, EnumValue, Field, Record, Root, Type, UbershapeAst, Union } from './ast';
-import { createRecursiveDescentParser, eof, RecursiveDescentParser, Token } from './recursive-descent-parser';
-import { kebabCasePattern, parseType, parseWhitespace } from './shared';
+import {
+  Def,
+  Enum,
+  EnumValue,
+  Field,
+  Record,
+  Root,
+  Type,
+  UbershapeAst,
+  Union,
+} from "./ast.ts";
+import {
+  createRecursiveDescentParser,
+  eof,
+  RecursiveDescentParser,
+  Token,
+} from "./recursive-descent-parser.ts";
+import { kebabCasePattern, parseType, parseWhitespace } from "./shared.ts";
 
 export interface ParseResult {
   ast: UbershapeAst;
@@ -35,8 +50,8 @@ export function parse(text: string): ParseResult {
   }
   parser.expect(
     eof,
-    ['enum', 'union', 'record'],
-    [kebabCasePattern]
+    ["enum", "union", "record"],
+    [kebabCasePattern],
   );
   return {
     ast: {
@@ -46,14 +61,17 @@ export function parse(text: string): ParseResult {
   };
 }
 
-function parseRoot(parser: RecursiveDescentParser, comments: Token[]): Root | undefined {
-  const keyword = parser.accept('root');
+function parseRoot(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): Root | undefined {
+  const keyword = parser.accept("root");
   if (!keyword) return;
   const types: Type[] = [];
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('>')) {
+    if (!parser.accept(">")) {
       parser.loc = loc;
       break;
     }
@@ -62,7 +80,7 @@ function parseRoot(parser: RecursiveDescentParser, comments: Token[]): Root | un
     types.push(type);
   }
   return {
-    kind: 'root',
+    kind: "root",
     start: keyword.start,
     end: (types[types.length - 1] ?? keyword).end,
     comments,
@@ -70,8 +88,11 @@ function parseRoot(parser: RecursiveDescentParser, comments: Token[]): Root | un
   };
 }
 
-function parseEnum(parser: RecursiveDescentParser, comments: Token[]): Enum | undefined {
-  const keyword = parser.accept('enum');
+function parseEnum(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): Enum | undefined {
+  const keyword = parser.accept("enum");
   if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
@@ -79,17 +100,17 @@ function parseEnum(parser: RecursiveDescentParser, comments: Token[]): Enum | un
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('|')) {
+    if (!parser.accept("|")) {
       parser.loc = loc;
       break;
     }
     parseWhitespace(parser);
-    const sharp = parser.expect('#');
+    const sharp = parser.expect("#");
     const name = parser.expect(kebabCasePattern);
     values.push({ start: sharp.start, end: name.end, name });
   }
   return {
-    kind: 'enum',
+    kind: "enum",
     start: keyword.start,
     end: (values[values.length - 1] ?? name).end,
     comments,
@@ -98,8 +119,11 @@ function parseEnum(parser: RecursiveDescentParser, comments: Token[]): Enum | un
   };
 }
 
-function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | undefined {
-  const keyword = parser.accept('union');
+function parseUnion(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): Union | undefined {
+  const keyword = parser.accept("union");
   if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
@@ -107,7 +131,7 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('|')) {
+    if (!parser.accept("|")) {
       parser.loc = loc;
       break;
     }
@@ -116,7 +140,7 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
     types.push(type);
   }
   return {
-    kind: 'union',
+    kind: "union",
     start: keyword.start,
     end: (types[types.length - 1] ?? name).end,
     comments,
@@ -125,20 +149,23 @@ function parseUnion(parser: RecursiveDescentParser, comments: Token[]): Union | 
   };
 }
 
-function parseRecord(parser: RecursiveDescentParser, comments: Token[]): Record | undefined {
-  const keyword = parser.accept('record');
+function parseRecord(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): Record | undefined {
+  const keyword = parser.accept("record");
   if (!keyword) return;
   parseWhitespace(parser);
   const name = parser.expect(kebabCasePattern);
   const fields: Field[] = [];
   parseWhitespace(parser);
-  parser.expect('{');
+  parser.expect("{");
   while (true) {
     const comments = parseWhitespace(parser);
     const name = parser.accept(kebabCasePattern);
     if (!name) break;
     parseWhitespace(parser);
-    parser.expect(':');
+    parser.expect(":");
     parseWhitespace(parser);
     const type = parseType(parser, true);
     fields.push({
@@ -149,9 +176,9 @@ function parseRecord(parser: RecursiveDescentParser, comments: Token[]): Record 
       type,
     });
   }
-  const closeBracket = parser.expect('}');
+  const closeBracket = parser.expect("}");
   return {
-    kind: 'record',
+    kind: "record",
     start: keyword.start,
     end: closeBracket.end,
     comments,

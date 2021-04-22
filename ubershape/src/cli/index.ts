@@ -1,8 +1,10 @@
-#!/usr/bin/env node
-import yargs = require('yargs/yargs');
+import { Command } from "https://deno.land/x/cliffy@v0.18.0/command/mod.ts";
 
-yargs(process.argv.slice(2))
-  .commandDir('cmds')
-  .demandCommand()
-  .help()
-  .argv;
+const command = new Command();
+command
+  .name("ubershape")
+  .arguments("<command> [options]")
+  .action(() => command.showHelp())
+  .command("codegen", (await import("./cmds/codegen.ts")).default)
+  .command("validate", (await import("./cmds/validate.ts")).default)
+  .parse(Deno.args);

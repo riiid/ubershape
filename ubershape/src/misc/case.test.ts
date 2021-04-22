@@ -1,13 +1,14 @@
-import { kebab2camel, kebab2pascal } from './case';
+import { assertEquals } from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { kebab2camel, kebab2pascal } from "./case.ts";
 
-test('kebab 2 camel', () => {
-  expect(kebab2camel('')).toBe('');
-  expect(kebab2camel('hello')).toBe('hello');
-  expect(kebab2camel('hello-world')).toBe('helloWorld');
+Deno.test("kebab 2 camel", () => {
+  assertEquals(kebab2camel(""), "");
+  assertEquals(kebab2camel("hello"), "hello");
+  assertEquals(kebab2camel("hello-world"), "helloWorld");
 });
 
-test('kebab 2 pascal', () => {
-  expect(kebab2pascal('')).toBe('');
-  expect(kebab2pascal('hello')).toBe('Hello');
-  expect(kebab2pascal('hello-world')).toBe('HelloWorld');
+Deno.test("kebab 2 pascal", () => {
+  assertEquals(kebab2pascal(""), "");
+  assertEquals(kebab2pascal("hello"), "Hello");
+  assertEquals(kebab2pascal("hello-world"), "HelloWorld");
 });

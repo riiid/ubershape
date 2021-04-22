@@ -1,25 +1,45 @@
-import { Def, EnumValue, EnumValueSelector, Field, FieldSelector, Select, SelectRoot, SubshapeAst, Type, TypeSelector, UbershapeAst } from './parser/ast';
-import { Span } from './parser/recursive-descent-parser';
-import { findDefByType, getDefTable, getRoot, UbershapeDefTable, UbershapeRootNotExistError } from './ubershape';
+import {
+  Def,
+  EnumValue,
+  EnumValueSelector,
+  Field,
+  FieldSelector,
+  Select,
+  SelectRoot,
+  SubshapeAst,
+  Type,
+  TypeSelector,
+  UbershapeAst,
+} from "./parser/ast.ts";
+import { Span } from "./parser/recursive-descent-parser.ts";
+import {
+  findDefByType,
+  getDefTable,
+  getRoot,
+  UbershapeDefTable,
+  UbershapeRootNotExistError,
+} from "./ubershape.ts";
 
 export function applySubshape(
   ubershapeAst: UbershapeAst,
-  subshapeAst: SubshapeAst
+  subshapeAst: SubshapeAst,
 ): UbershapeAst {
   const usedSet: Set<Span> = new Set();
   for (const select of subshapeAst.selects) {
-    if (select.kind === 'select-root') {
+    if (select.kind === "select-root") {
       const root = getRoot(ubershapeAst);
       if (!root) throw new UbershapeRootNotExistError();
       usedSet.add(root);
       for (const typeSelector of select.typeSelectors) {
-        const type = root.types.find(type => {
+        const type = root.types.find((type) => {
           return (
             (type.type.text === typeSelector.type.text) &&
             (type.multiple === typeSelector.multiple)
           );
         });
-        if (!type) throw new SubshapeTypeSelectorReferenceError(root, typeSelector);
+        if (!type) {
+          throw new SubshapeTypeSelectorReferenceError(root, typeSelector);
+        }
         usedSet.add(type);
       }
       continue;
@@ -27,37 +47,43 @@ export function applySubshape(
     const def = findDefByType(ubershapeAst, select.typeName.text);
     if (!def) throw new SubshapeSelectReferenceError(select);
     usedSet.add(def);
-    if (select.kind === 'select-record') {
-      if (def.kind !== 'record') throw new SubshapeSelectReferenceError(select);
+    if (select.kind === "select-record") {
+      if (def.kind !== "record") throw new SubshapeSelectReferenceError(select);
       for (const fieldSelector of select.fieldSelectors) {
         const fieldName = fieldSelector.fieldName.text;
-        const field = def.fields.find(field => field.name.text === fieldName);
-        if (!field) throw new SubshapeFieldSelectorReferenceError(def, fieldSelector);
+        const field = def.fields.find((field) => field.name.text === fieldName);
+        if (!field) {
+          throw new SubshapeFieldSelectorReferenceError(def, fieldSelector);
+        }
         usedSet.add(field);
       }
       continue;
     }
-    if (select.kind === 'select-union') {
-      if (def.kind !== 'union') throw new SubshapeSelectReferenceError(select);
+    if (select.kind === "select-union") {
+      if (def.kind !== "union") throw new SubshapeSelectReferenceError(select);
       for (const typeSelector of select.typeSelectors) {
-        const type = def.types.find(type => {
+        const type = def.types.find((type) => {
           return (
             (type.type.text === typeSelector.type.text) &&
             (type.multiple === typeSelector.multiple)
           );
         });
-        if (!type) throw new SubshapeTypeSelectorReferenceError(def, typeSelector);
+        if (!type) {
+          throw new SubshapeTypeSelectorReferenceError(def, typeSelector);
+        }
         usedSet.add(type);
       }
       continue;
     }
-    if (select.kind === 'select-enum') {
-      if (def.kind !== 'enum') throw new SubshapeSelectReferenceError(select);
+    if (select.kind === "select-enum") {
+      if (def.kind !== "enum") throw new SubshapeSelectReferenceError(select);
       for (const valueSelector of select.valueSelectors) {
         const value = def.values.find(
-          value => value.name.text === valueSelector.valueName.text
+          (value) => value.name.text === valueSelector.valueName.text,
         );
-        if (!value) throw new SubshapeValueSelectorReferenceError(def, valueSelector);
+        if (!value) {
+          throw new SubshapeValueSelectorReferenceError(def, valueSelector);
+        }
         usedSet.add(value);
       }
       continue;
@@ -65,28 +91,28 @@ export function applySubshape(
   }
   return {
     defs: ubershapeAst.defs.filter(
-      def => usedSet.has(def)
-    ).map(def => {
+      (def) => usedSet.has(def),
+    ).map((def) => {
       switch (def.kind) {
-        case 'root':
+        case "root":
           return {
             ...def,
-            types: def.types.filter(type => usedSet.has(type)),
+            types: def.types.filter((type) => usedSet.has(type)),
           };
-        case 'record':
+        case "record":
           return {
             ...def,
-            fields: def.fields.filter(field => usedSet.has(field)),
+            fields: def.fields.filter((field) => usedSet.has(field)),
           };
-        case 'union':
+        case "union":
           return {
             ...def,
-            types: def.types.filter(type => usedSet.has(type)),
+            types: def.types.filter((type) => usedSet.has(type)),
           };
-        case 'enum':
+        case "enum":
           return {
             ...def,
-            values: def.values.filter(value => usedSet.has(value)),
+            values: def.values.filter((value) => usedSet.has(value)),
           };
       }
     }),
@@ -95,7 +121,7 @@ export function applySubshape(
 
 export function validateSubshape(
   ubershapeAst: UbershapeAst,
-  subshapeAst: SubshapeAst
+  subshapeAst: SubshapeAst,
 ): SubshapeValidationError[] {
   const result: SubshapeValidationError[] = [];
   validateSubshapePass1(ubershapeAst, subshapeAst, result);
@@ -108,7 +134,7 @@ export function validateSubshape(
 function validateSubshapePass1(
   ubershapeAst: UbershapeAst,
   subshapeAst: SubshapeAst,
-  result: SubshapeValidationError[]
+  result: SubshapeValidationError[],
 ): void {
   const ubershapeDefTable = getDefTable(ubershapeAst);
   const findDefBySelect = getFindDefBySelect(ubershapeAst, ubershapeDefTable);
@@ -122,27 +148,37 @@ function validateSubshapePass1(
       const _def = def as { fields: Field[] };
       for (const fieldSelector of select.fieldSelectors) {
         const fieldNameText = fieldSelector.fieldName.text;
-        const field = _def.fields.find(field => field.name.text === fieldNameText);
+        const field = _def.fields.find((field) =>
+          field.name.text === fieldNameText
+        );
         if (field == null) {
-          result.push(new SubshapeFieldSelectorReferenceError(def, fieldSelector));
+          result.push(
+            new SubshapeFieldSelectorReferenceError(def, fieldSelector),
+          );
         }
       }
     } else if (isSelectOfTypeSelectors(select)) {
       const _def = def as { types: Type[] };
       for (const typeSelector of select.typeSelectors) {
         const typeText = typeSelector.type.text;
-        const type = _def.types.find(type => type.type.text === typeText);
+        const type = _def.types.find((type) => type.type.text === typeText);
         if (type == null) {
-          result.push(new SubshapeTypeSelectorReferenceError(def, typeSelector));
+          result.push(
+            new SubshapeTypeSelectorReferenceError(def, typeSelector),
+          );
         }
       }
     } else if (isSelectOfEnumValueSelectors(select)) {
       const _def = def as { values: EnumValue[] };
       for (const valueSelector of select.valueSelectors) {
         const valueNameText = valueSelector.valueName.text;
-        const value = _def.values.find(value => value.name.text === valueNameText);
+        const value = _def.values.find((value) =>
+          value.name.text === valueNameText
+        );
         if (value == null) {
-          result.push(new SubshapeValueSelectorReferenceError(def, valueSelector));
+          result.push(
+            new SubshapeValueSelectorReferenceError(def, valueSelector),
+          );
         }
       }
     }
@@ -155,7 +191,7 @@ function validateSubshapePass1(
 function validateSubshapePass2(
   ubershapeAst: UbershapeAst,
   subshapeAst: SubshapeAst,
-  result: SubshapeValidationError[]
+  result: SubshapeValidationError[],
 ): void {
   const selectRoot = getSelectRoot(subshapeAst);
   if (selectRoot == null) {
@@ -164,14 +200,14 @@ function validateSubshapePass2(
     return;
   }
   const notVisitedSelects = new Set(
-    subshapeAst.selects.filter(select => select.kind !== 'select-root')
+    subshapeAst.selects.filter((select) => select.kind !== "select-root"),
   );
   interface SelectRequest {
     requiredTypeName: string;
     selector?: TypeSelector | FieldSelector | EnumValueSelector;
   }
   const selectRequests: SelectRequest[] = selectRoot.typeSelectors.map(
-    typeSelector => ({ requiredTypeName: typeSelector.type.text })
+    (typeSelector) => ({ requiredTypeName: typeSelector.type.text }),
   );
   const ubershapeDefTable = getDefTable(ubershapeAst);
   const subshapeSelectTable = getSelectTable(subshapeAst);
@@ -191,7 +227,9 @@ function validateSubshapePass2(
       const _def = def as { fields: Field[] };
       for (const fieldSelector of select.fieldSelectors) {
         const fieldNameText = fieldSelector.fieldName.text;
-        const field = _def.fields.find(field => field.name.text === fieldNameText);
+        const field = _def.fields.find((field) =>
+          field.name.text === fieldNameText
+        );
         if (field == null) continue; // already handled by pass1
         selectRequests.push({
           requiredTypeName: field.type.type.text,
@@ -213,25 +251,33 @@ function validateSubshapePass2(
 }
 function getFindDefBySelect(
   ubershapeAst: UbershapeAst,
-  ubershapeDefTable: UbershapeDefTable = getDefTable(ubershapeAst)
+  ubershapeDefTable: UbershapeDefTable = getDefTable(ubershapeAst),
 ): (select: Select) => Def | undefined {
   return (select: Select) => {
-    if (select.kind === 'select-root') return getRoot(ubershapeAst);
+    if (select.kind === "select-root") return getRoot(ubershapeAst);
     return ubershapeDefTable[select.typeName.text];
   };
 }
-function isSelectOfFieldSelectors(select: Select): select is Select & { fieldSelectors: FieldSelector[] } {
-  return 'fieldSelectors' in select;
+function isSelectOfFieldSelectors(
+  select: Select,
+): select is Select & { fieldSelectors: FieldSelector[] } {
+  return "fieldSelectors" in select;
 }
-function isSelectOfTypeSelectors(select: Select): select is Select & { typeSelectors: TypeSelector[] } {
-  return 'typeSelectors' in select;
+function isSelectOfTypeSelectors(
+  select: Select,
+): select is Select & { typeSelectors: TypeSelector[] } {
+  return "typeSelectors" in select;
 }
-function isSelectOfEnumValueSelectors(select: Select): select is Select & { valueSelectors: EnumValueSelector[] } {
-  return 'valueSelectors' in select;
+function isSelectOfEnumValueSelectors(
+  select: Select,
+): select is Select & { valueSelectors: EnumValueSelector[] } {
+  return "valueSelectors" in select;
 }
 
 function getSelectRoot(ast: SubshapeAst): SelectRoot | undefined {
-  for (const select of ast.selects) if (select.kind === 'select-root') return select;
+  for (const select of ast.selects) {
+    if (select.kind === "select-root") return select;
+  }
 }
 interface SubshapeSelectTable {
   [typeName: string]: Select;
@@ -239,7 +285,7 @@ interface SubshapeSelectTable {
 function getSelectTable(ast: SubshapeAst): SubshapeSelectTable {
   const result: SubshapeSelectTable = {};
   for (const select of ast.selects) {
-    if (select.kind === 'select-root') continue;
+    if (select.kind === "select-root") continue;
     result[select.typeName.text] = select;
   }
   return result;
@@ -251,10 +297,9 @@ export type SubshapeValidationError =
   | SubshapeSelectRequiredError
   | SubshapeFieldSelectorReferenceError
   | SubshapeTypeSelectorReferenceError
-  | SubshapeValueSelectorReferenceError
-;
+  | SubshapeValueSelectorReferenceError;
 
-export { ErrorType as SubshapeValidationErrorType }
+export { ErrorType as SubshapeValidationErrorType };
 const enum ErrorType {
   SelectReference,
   OrphanSelect,
@@ -264,47 +309,56 @@ const enum ErrorType {
   ValueSelectorReference,
 }
 
-export { ErrorBase as SubshapeValidationErrorBase }
+export { ErrorBase as SubshapeValidationErrorBase };
 abstract class ErrorBase<TErrorType extends ErrorType> extends Error {
   constructor(public errorType: TErrorType) {
     super();
   }
 }
 
-export class SubshapeSelectReferenceError extends ErrorBase<ErrorType.SelectReference> {
+export class SubshapeSelectReferenceError
+  extends ErrorBase<ErrorType.SelectReference> {
   constructor(public select: Select) {
     super(ErrorType.SelectReference);
   }
 }
 
-export class SubshapeOrphanSelectError extends ErrorBase<ErrorType.OrphanSelect> {
+export class SubshapeOrphanSelectError
+  extends ErrorBase<ErrorType.OrphanSelect> {
   constructor(public select: Select) {
     super(ErrorType.OrphanSelect);
   }
 }
 
-export class SubshapeSelectRequiredError extends ErrorBase<ErrorType.SelectRequired> {
+export class SubshapeSelectRequiredError
+  extends ErrorBase<ErrorType.SelectRequired> {
   /**
    * @param selector 어디에서 참조됐기 때문에 해당 타입에 대한 Select가 필요한지를 알려주기 위한 정보입니다.
    */
-  constructor(public def: Def, public selector?: TypeSelector | FieldSelector | EnumValueSelector) {
+  constructor(
+    public def: Def,
+    public selector?: TypeSelector | FieldSelector | EnumValueSelector,
+  ) {
     super(ErrorType.SelectRequired);
   }
 }
 
-export class SubshapeFieldSelectorReferenceError extends ErrorBase<ErrorType.FieldSelectorReference> {
+export class SubshapeFieldSelectorReferenceError
+  extends ErrorBase<ErrorType.FieldSelectorReference> {
   constructor(public def: Def, public fieldSelector: FieldSelector) {
     super(ErrorType.FieldSelectorReference);
   }
 }
 
-export class SubshapeTypeSelectorReferenceError extends ErrorBase<ErrorType.TypeSelectorReference> {
+export class SubshapeTypeSelectorReferenceError
+  extends ErrorBase<ErrorType.TypeSelectorReference> {
   constructor(public def: Def, public typeSelector: TypeSelector) {
     super(ErrorType.TypeSelectorReference);
   }
 }
 
-export class SubshapeValueSelectorReferenceError extends ErrorBase<ErrorType.ValueSelectorReference> {
+export class SubshapeValueSelectorReferenceError
+  extends ErrorBase<ErrorType.ValueSelectorReference> {
   constructor(public def: Def, public valueSelector: EnumValueSelector) {
     super(ErrorType.ValueSelectorReference);
   }

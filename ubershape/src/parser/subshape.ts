@@ -1,6 +1,23 @@
-import { EnumValueSelector, FieldSelector, Select, SelectEnum, SelectRecord, SelectRoot, SelectUnion, SubshapeAst, TypeSelector, Use } from './ast';
-import { createRecursiveDescentParser, eof, RecursiveDescentParser, SyntaxError, Token } from './recursive-descent-parser';
-import { kebabCasePattern, parseType, parseWhitespace } from './shared';
+import {
+  EnumValueSelector,
+  FieldSelector,
+  Select,
+  SelectEnum,
+  SelectRecord,
+  SelectRoot,
+  SelectUnion,
+  SubshapeAst,
+  TypeSelector,
+  Use,
+} from "./ast.ts";
+import {
+  createRecursiveDescentParser,
+  eof,
+  RecursiveDescentParser,
+  SyntaxError,
+  Token,
+} from "./recursive-descent-parser.ts";
+import { kebabCasePattern, parseType, parseWhitespace } from "./shared.ts";
 
 export interface ParseResult {
   ast: SubshapeAst;
@@ -28,13 +45,13 @@ export function parse(text: string): ParseResult {
 }
 
 function parseUse(parser: RecursiveDescentParser, comments: Token[]): Use {
-  const keyword = parser.expect('use');
+  const keyword = parser.expect("use");
   parseWhitespace(parser);
-  parser.expect('\'');
+  parser.expect("'");
   const ubershapePath = parser.expect(/[^']*/);
-  const endQuote = parser.expect('\'');
+  const endQuote = parser.expect("'");
   return {
-    kind: 'use',
+    kind: "use",
     start: keyword.start,
     end: endQuote.end,
     comments,
@@ -42,8 +59,11 @@ function parseUse(parser: RecursiveDescentParser, comments: Token[]): Use {
   };
 }
 
-function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select | undefined {
-  const keyword = parser.accept('select');
+function parseSelect(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): Select | undefined {
+  const keyword = parser.accept("select");
   if (!keyword) return;
   parseWhitespace(parser);
   const selectRoot = parseSelectRoot(parser, comments);
@@ -56,19 +76,22 @@ function parseSelect(parser: RecursiveDescentParser, comments: Token[]): Select 
   if (selectRecord) return selectRecord;
   throw new SyntaxError(
     parser,
-    ['root', 'enum', 'union', 'record'],
-    [kebabCasePattern]
+    ["root", "enum", "union", "record"],
+    [kebabCasePattern],
   );
 }
 
-function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): SelectRoot | undefined {
-  const keyword = parser.accept('root');
+function parseSelectRoot(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): SelectRoot | undefined {
+  const keyword = parser.accept("root");
   if (!keyword) return;
   const typeSelectors: TypeSelector[] = [];
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('>')) {
+    if (!parser.accept(">")) {
       parser.loc = loc;
       break;
     }
@@ -77,7 +100,7 @@ function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): Sel
     typeSelectors.push(typeSelector);
   }
   return {
-    kind: 'select-root',
+    kind: "select-root",
     start: keyword.start,
     end: (typeSelectors[typeSelectors.length - 1] ?? keyword).end,
     comments,
@@ -85,8 +108,11 @@ function parseSelectRoot(parser: RecursiveDescentParser, comments: Token[]): Sel
   };
 }
 
-function parseSelectEnum(parser: RecursiveDescentParser, comments: Token[]): SelectEnum | undefined {
-  const keyword = parser.accept('enum');
+function parseSelectEnum(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): SelectEnum | undefined {
+  const keyword = parser.accept("enum");
   if (!keyword) return;
   parseWhitespace(parser);
   const typeName = parser.expect(kebabCasePattern);
@@ -94,17 +120,17 @@ function parseSelectEnum(parser: RecursiveDescentParser, comments: Token[]): Sel
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('|')) {
+    if (!parser.accept("|")) {
       parser.loc = loc;
       break;
     }
     parseWhitespace(parser);
-    const sharp = parser.expect('#');
+    const sharp = parser.expect("#");
     const valueName = parser.expect(kebabCasePattern);
     valueSelectors.push({ start: sharp.start, end: valueName.end, valueName });
   }
   return {
-    kind: 'select-enum',
+    kind: "select-enum",
     start: keyword.start,
     end: (valueSelectors[valueSelectors.length - 1] ?? typeName).end,
     comments,
@@ -113,8 +139,11 @@ function parseSelectEnum(parser: RecursiveDescentParser, comments: Token[]): Sel
   };
 }
 
-function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): SelectUnion | undefined {
-  const keyword = parser.accept('union');
+function parseSelectUnion(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): SelectUnion | undefined {
+  const keyword = parser.accept("union");
   if (!keyword) return;
   parseWhitespace(parser);
   const typeName = parser.expect(kebabCasePattern);
@@ -122,7 +151,7 @@ function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): Se
   while (true) {
     const loc = parser.loc;
     parseWhitespace(parser);
-    if (!parser.accept('|')) {
+    if (!parser.accept("|")) {
       parser.loc = loc;
       break;
     }
@@ -131,7 +160,7 @@ function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): Se
     typeSelectors.push(typeSelector);
   }
   return {
-    kind: 'select-union',
+    kind: "select-union",
     start: keyword.start,
     end: (typeSelectors[typeSelectors.length - 1] ?? typeName).end,
     comments,
@@ -140,13 +169,16 @@ function parseSelectUnion(parser: RecursiveDescentParser, comments: Token[]): Se
   };
 }
 
-function parseSelectRecord(parser: RecursiveDescentParser, comments: Token[]): SelectRecord | undefined {
-  const keyword = parser.accept('record');
+function parseSelectRecord(
+  parser: RecursiveDescentParser,
+  comments: Token[],
+): SelectRecord | undefined {
+  const keyword = parser.accept("record");
   if (!keyword) return;
   parseWhitespace(parser);
   const typeName = parser.expect(kebabCasePattern);
   parseWhitespace(parser);
-  parser.expect('{');
+  parser.expect("{");
   const fieldSelectors: FieldSelector[] = [];
   while (true) {
     const comments = parseWhitespace(parser);
@@ -159,9 +191,9 @@ function parseSelectRecord(parser: RecursiveDescentParser, comments: Token[]): S
       fieldName,
     });
   }
-  const closeBracket = parser.expect('}');
+  const closeBracket = parser.expect("}");
   return {
-    kind: 'select-record',
+    kind: "select-record",
     start: keyword.start,
     end: closeBracket.end,
     comments,

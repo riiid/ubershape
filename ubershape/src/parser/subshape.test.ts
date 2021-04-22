@@ -1,17 +1,20 @@
-import { DeepPartial } from '../misc/type';
-import { EnumValueSelector, FieldSelector, SelectEnum, SelectRecord, SelectRoot, SelectUnion, TypeSelector } from './ast';
-import { parse } from './subshape';
+import {
+  assertEquals,
+  assertObjectMatch,
+} from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { SelectEnum, SelectRecord, SelectRoot, SelectUnion } from "./ast.ts";
+import { parse } from "./subshape.ts";
 
-test('use', () => {
+Deno.test("use", () => {
   const result = parse(`
     use './foo.ubershape'
   `);
   const useStatement = result.ast.use;
-  expect(useStatement.kind).toBe('use');
-  expect(useStatement.ubershapePath.text).toBe('./foo.ubershape');
+  assertEquals(useStatement.kind, "use");
+  assertEquals(useStatement.ubershapePath.text, "./foo.ubershape");
 });
 
-test('select root', () => {
+Deno.test("select root", () => {
   const result = parse(`
     use './foo.ubershape'
 
@@ -21,16 +24,16 @@ test('select root', () => {
   `);
 
   const selectRootStatement = result.ast.selects[0] as SelectRoot;
-  expect(selectRootStatement.kind).toBe('select-root');
-  expect(selectRootStatement.typeSelectors.length).toBe(2);
+  assertEquals(selectRootStatement.kind, "select-root");
+  assertEquals(selectRootStatement.typeSelectors.length, 2);
   const typeSelectors = selectRootStatement.typeSelectors;
-  expect(typeSelectors).toMatchObject<DeepPartial<TypeSelector>[]>([
-    { type: { text: 'a', } },
-    { type: { text: 'b', }, multiple: true },
-  ]);
+  assertSelectors(typeSelectors, [
+    { type: { text: "a" } },
+    { type: { text: "b" }, multiple: true },
+  ] as any);
 });
 
-test('select record', () => {
+Deno.test("select record", () => {
   const result = parse(`
     use './foo.ubershape'
 
@@ -41,16 +44,16 @@ test('select record', () => {
   `);
 
   const selectRootStatement = result.ast.selects[0] as SelectRecord;
-  expect(selectRootStatement.kind).toBe('select-record');
-  expect(selectRootStatement.fieldSelectors.length).toBe(2);
+  assertEquals(selectRootStatement.kind, "select-record");
+  assertEquals(selectRootStatement.fieldSelectors.length, 2);
   const fieldSelectors = selectRootStatement.fieldSelectors;
-  expect(fieldSelectors).toMatchObject<DeepPartial<FieldSelector>[]>([
-    { fieldName: { text: 'a', } },
-    { fieldName: { text: 'b', } },
-  ]);
+  assertSelectors(fieldSelectors, [
+    { fieldName: { text: "a" } },
+    { fieldName: { text: "b" } },
+  ] as any);
 });
 
-test('select union', () => {
+Deno.test("select union", () => {
   const result = parse(`
     use './foo.ubershape'
 
@@ -60,16 +63,16 @@ test('select union', () => {
   `);
 
   const selectUnionStatement = result.ast.selects[0] as SelectUnion;
-  expect(selectUnionStatement.kind).toBe('select-union');
-  expect(selectUnionStatement.typeSelectors.length).toBe(2);
+  assertEquals(selectUnionStatement.kind, "select-union");
+  assertEquals(selectUnionStatement.typeSelectors.length, 2);
   const typeSelectors = selectUnionStatement.typeSelectors;
-  expect(typeSelectors).toMatchObject<DeepPartial<TypeSelector>[]>([
-    { type: { text: 'a', } },
-    { type: { text: 'b', }, multiple: true },
-  ]);
+  assertSelectors(typeSelectors, [
+    { type: { text: "a" } },
+    { type: { text: "b" }, multiple: true },
+  ] as any);
 });
 
-test('select enum', () => {
+Deno.test("select enum", () => {
   const result = parse(`
     use './foo.ubershape'
 
@@ -79,11 +82,16 @@ test('select enum', () => {
   `);
 
   const selectEnumStatement = result.ast.selects[0] as SelectEnum;
-  expect(selectEnumStatement.kind).toBe('select-enum');
-  expect(selectEnumStatement.valueSelectors.length).toBe(2);
+  assertEquals(selectEnumStatement.kind, "select-enum");
+  assertEquals(selectEnumStatement.valueSelectors.length, 2);
   const valueSelectors = selectEnumStatement.valueSelectors;
-  expect(valueSelectors).toMatchObject<DeepPartial<EnumValueSelector>[]>([
-    { valueName: { text: 'a', } },
-    { valueName: { text: 'b', } },
-  ]);
+  assertSelectors(valueSelectors, [
+    { valueName: { text: "a" } },
+    { valueName: { text: "b" } },
+  ] as any);
 });
+
+function assertSelectors(actual: any[], expected: any[]): void {
+  const len = Math.max(actual.length, expected.length);
+  for (let i = 0; i < len; ++i) assertObjectMatch(actual[i], expected[i]);
+}

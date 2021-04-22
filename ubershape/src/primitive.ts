@@ -1,7 +1,7 @@
 export const primitiveTypeNames: string[] = [
-  'boolean',
-  'number',
-  'string',
+  "boolean",
+  "number",
+  "string",
 ];
 
 const primitiveTypeNameSet = new Set(primitiveTypeNames);

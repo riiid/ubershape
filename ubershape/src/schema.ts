@@ -1,4 +1,4 @@
-import { SubshapeAst, UbershapeAst } from './parser/ast';
+import { SubshapeAst, UbershapeAst } from "./parser/ast.ts";
 
 export const enum SchemaType {
   Ubershape,
@@ -7,8 +7,7 @@ export const enum SchemaType {
 
 export type Schema =
   | UbershapeSchema
-  | SubshapeSchema
-;
+  | SubshapeSchema;
 
 interface SchemaBase<T extends SchemaType> {
   kind: T;

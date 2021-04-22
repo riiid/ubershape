@@ -1,6 +1,6 @@
-import { parse } from './parser/ubershape';
+import { assertEquals } from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { parse } from "./parser/ubershape.ts";
 import {
-  validateUbershape,
   UbershapeDefDuplicateEnumValueError,
   UbershapeDefDuplicateTypeError,
   UbershapeDuplicateDefError,
@@ -8,35 +8,36 @@ import {
   UbershapeRecordDuplicateFieldNameError,
   UbershapeReferenceError,
   UbershapeRootNotExistError,
-} from './ubershape';
+  validateUbershape,
+} from "./ubershape.ts";
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
-    'union foo',
+    "union foo",
     UbershapeRootNotExistError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
-  expectError('root', UbershapeEmptyDefError, 1);
-  expectError('enum foo', UbershapeEmptyDefError, 1);
-  expectError('union foo', UbershapeEmptyDefError, 1);
-  expectError('record foo {}', UbershapeEmptyDefError, 1);
+Deno.test("validate", () => {
+  expectError("root", UbershapeEmptyDefError, 1);
+  expectError("enum foo", UbershapeEmptyDefError, 1);
+  expectError("union foo", UbershapeEmptyDefError, 1);
+  expectError("record foo {}", UbershapeEmptyDefError, 1);
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     `
       union foo
       record foo {}
     `,
     UbershapeDuplicateDefError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     `
       enum foo
@@ -44,11 +45,11 @@ test('validate', () => {
         | #bar
     `,
     UbershapeDefDuplicateEnumValueError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     `
       union foo
@@ -56,11 +57,11 @@ test('validate', () => {
         | bar
     `,
     UbershapeDefDuplicateTypeError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     `
       record foo {
@@ -69,11 +70,11 @@ test('validate', () => {
       }
     `,
     UbershapeRecordDuplicateFieldNameError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     `
       record foo {
@@ -81,7 +82,7 @@ test('validate', () => {
       }
     `,
     UbershapeReferenceError,
-    1
+    1,
   );
 });
 
@@ -90,10 +91,10 @@ function getValidationErrors(text: string) {
   return validateUbershape(parseResult.ast);
 }
 
-type ErrorClass = { new(...args: any[]): Error };
+type ErrorClass = { new (...args: any[]): Error };
 
 function expectError(ubershapeCode: string, Error: ErrorClass, count: number) {
   const errors = getValidationErrors(ubershapeCode);
-  const actualCount = errors.filter(err => err instanceof Error).length;
-  expect(actualCount).toBe(count);
+  const actualCount = errors.filter((err) => err instanceof Error).length;
+  assertEquals(actualCount, count);
 }

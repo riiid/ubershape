@@ -3,10 +3,10 @@ function sentenceCase(text: string): string {
 }
 
 export function kebab2camel(kebab: string): string {
-  const words = kebab.split('-');
-  return words[0] + words.slice(1).map(sentenceCase).join('');
+  const words = kebab.split("-");
+  return words[0] + words.slice(1).map(sentenceCase).join("");
 }
 
 export function kebab2pascal(kebab: string): string {
-  return kebab.split('-').map(sentenceCase).join('');
+  return kebab.split("-").map(sentenceCase).join("");
 }

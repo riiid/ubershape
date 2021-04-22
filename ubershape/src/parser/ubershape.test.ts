@@ -1,43 +1,46 @@
-import { DeepPartial } from '../misc/type';
-import { Enum, EnumValue, Field, Record, Root, Type, Union } from './ast';
-import { parse } from './ubershape';
+import {
+  assertEquals,
+  assertObjectMatch,
+} from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { Enum, Record, Root, Union } from "./ast.ts";
+import { parse } from "./ubershape.ts";
 
-test('root 1', () => {
+Deno.test("root 1", () => {
   parse(`
     root
   `);
 });
 
-test('root 2', () => {
+Deno.test("root 2", () => {
   parse(`
     root
       > foo
   `);
 });
 
-test('root 3', () => {
+Deno.test("root 3", () => {
   const result = parse(`
     root
       > a
       > b[]
   `);
   const firstDef = result.ast.defs[0] as Root;
-  expect(firstDef.kind).toBe('root');
-  expect(firstDef.types.length).toBe(2);
+  assertEquals(firstDef.kind, "root");
+  assertEquals(firstDef.types.length, 2);
   const types = firstDef.types;
-  expect(types).toMatchObject<DeepPartial<Type>[]>([
-    { type: { text: 'a', } },
-    { type: { text: 'b', }, multiple: true },
-  ]);
+  assertSelectors(types, [
+    { type: { text: "a" } },
+    { type: { text: "b" }, multiple: true },
+  ] as any);
 });
 
-test('record 1', () => {
+Deno.test("record 1", () => {
   parse(`
     record foo {}
   `);
 });
 
-test('record 2', () => {
+Deno.test("record 2", () => {
   parse(`
     record foo {
       a: boolean
@@ -45,7 +48,7 @@ test('record 2', () => {
   `);
 });
 
-test('record 3', () => {
+Deno.test("record 3", () => {
   const result = parse(`
     record foo {
       a: boolean
@@ -54,31 +57,31 @@ test('record 3', () => {
     }
   `);
   const firstDef = result.ast.defs[0] as Record;
-  expect(firstDef.kind).toBe('record');
-  expect(firstDef.name.text).toBe('foo');
-  expect(firstDef.fields.length).toBe(3);
+  assertEquals(firstDef.kind, "record");
+  assertEquals(firstDef.name.text, "foo");
+  assertEquals(firstDef.fields.length, 3);
   const fields = firstDef.fields;
-  expect(fields).toMatchObject<DeepPartial<Field>[]>([
-    { name: { text: 'a', }, type: { type: { text: 'boolean', } } },
-    { name: { text: 'b', }, type: { type: { text: 'number', } } },
-    { name: { text: 'c', }, type: { type: { text: 'string', } } },
-  ]);
+  assertSelectors(fields, [
+    { name: { text: "a" }, type: { type: { text: "boolean" } } },
+    { name: { text: "b" }, type: { type: { text: "number" } } },
+    { name: { text: "c" }, type: { type: { text: "string" } } },
+  ] as any);
 });
 
-test('union 1', () => {
+Deno.test("union 1", () => {
   parse(`
     union foo
   `);
 });
 
-test('union 2', () => {
+Deno.test("union 2", () => {
   parse(`
     union foo
       | boolean
   `);
 });
 
-test('union 3', () => {
+Deno.test("union 3", () => {
   const result = parse(`
     union foo
       | boolean
@@ -86,41 +89,46 @@ test('union 3', () => {
       | string
   `);
   const firstDef = result.ast.defs[0] as Union;
-  expect(firstDef.kind).toBe('union');
-  expect(firstDef.name.text).toBe('foo');
+  assertEquals(firstDef.kind, "union");
+  assertEquals(firstDef.name.text, "foo");
   const types = firstDef.types;
-  expect(types).toMatchObject<DeepPartial<Type>[]>([
-    { type: { text: 'boolean' } },
-    { type: { text: 'number' } },
-    { type: { text: 'string' } },
-  ]);
+  assertSelectors(types, [
+    { type: { text: "boolean" } },
+    { type: { text: "number" } },
+    { type: { text: "string" } },
+  ] as any);
 });
 
-test('enum 1', () => {
+Deno.test("enum 1", () => {
   parse(`
     enum foo
   `);
 });
 
-test('enum 2', () => {
+Deno.test("enum 2", () => {
   parse(`
     enum foo
       | #a
   `);
 });
 
-test('enum 3', () => {
+Deno.test("enum 3", () => {
   const result = parse(`
     enum foo
       | #a
       | #b
   `);
   const firstDef = result.ast.defs[0] as Enum;
-  expect(firstDef.kind).toBe('enum');
-  expect(firstDef.name.text).toBe('foo');
+  assertEquals(firstDef.kind, "enum");
+  assertEquals(firstDef.name.text, "foo");
   const values = firstDef.values;
-  expect(values).toMatchObject<DeepPartial<EnumValue>[]>([
-    { name: { text: 'a' } },
-    { name: { text: 'b' } },
-  ]);
+  assertSelectors(values, [
+    { name: { text: "a" } },
+    { name: { text: "b" } },
+  ] as any);
 });
+
+function assertSelectors(actual: any[], expected: any[]): void {
+  const len = Math.max(actual.length, expected.length);
+  for (let i = 0; i < len; ++i) assertObjectMatch(actual[i], expected[i]);
+}

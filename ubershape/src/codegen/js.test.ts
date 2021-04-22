@@ -1,36 +1,44 @@
-import * as fs from 'fs';
-import * as mkdirp from 'mkdirp';
-import * as path from 'path';
-import { Schema, SubshapeSchema, UbershapeSchema } from '../schema';
-import { schema2js, JsAndDts } from './js';
-import { getReadFunction } from '../io/read-schema';
-import { writeJsAndDts } from '../io/write-file';
+import { assertEquals } from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { ensureDirSync } from "https://deno.land/std@0.93.0/fs/mod.ts";
+import * as path from "https://deno.land/std@0.93.0/path/mod.ts";
+import { Schema, SubshapeSchema, UbershapeSchema } from "../schema.ts";
+import { JsAndDts, schema2js } from "./js.ts";
+import { getReadFunction } from "../io/read-schema.ts";
+import { writeJsAndDts } from "../io/write-file.ts";
 
 const read = getReadFunction();
-const fixtureDir = path.resolve(__dirname, 'fixture');
-const generatedDir = path.resolve(__dirname, 'generated');
-mkdirp.sync(generatedDir);
+const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
+const fixtureDir = path.resolve(__dirname, "fixture");
+const generatedDir = path.resolve(__dirname, "generated");
+ensureDirSync(generatedDir);
 
-test('enum', () => {
+Deno.test("enum", () => {
   const rrtv2 = getRrtv2();
-  expect(rrtv2.isHeadingLevel('#h1')).toBe(true);
-  expect(rrtv2.isHeadingLevel('#h0')).toBe(false);
+  assertEquals(rrtv2.isHeadingLevel("#h1"), true);
+  assertEquals(rrtv2.isHeadingLevel("#h0"), false);
 });
 
-test('visitor', () => {
+Deno.test("visitor", () => {
   const rrtv2 = getRrtv2();
   const visitor = rrtv2.visitor;
-  const jsonText = fs.readFileSync(path.join(fixtureDir, 'riiid-rich-text-v2.json')).toString();
+  const jsonText = Deno.readTextFileSync(
+    path.join(fixtureDir, "riiid-rich-text-v2.json"),
+  );
   const documentSections = JSON.parse(jsonText);
-  expect(documentSections).toStrictEqual(visitor.visitDocumentSections(visitor, documentSections));
+  assertEquals(
+    documentSections,
+    visitor.visitDocumentSections(visitor, documentSections),
+  );
 });
 
 function getRrtv2() {
-  const rrtv2Schema = readFixture('riiid-rich-text-v2.ubershape').schema as UbershapeSchema;
+  const rrtv2Schema = readFixture("riiid-rich-text-v2.ubershape")
+    .schema as UbershapeSchema;
   return getGeneratedModule(rrtv2Schema);
 }
 function getRrtv2Realtor() {
-  const rrtv2RealtorSchema = readFixture('rrt-v2-realtor.subshape').schema as SubshapeSchema;
+  const rrtv2RealtorSchema = readFixture("rrt-v2-realtor.subshape")
+    .schema as SubshapeSchema;
   return getGeneratedModule(rrtv2RealtorSchema);
 }
 

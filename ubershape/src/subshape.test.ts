@@ -1,14 +1,15 @@
-import { parse as parseUbershape } from './parser/ubershape';
-import { parse as parseSubshape } from './parser/subshape';
+import { assertEquals } from "https://deno.land/std@0.93.0/testing/asserts.ts";
+import { parse as parseUbershape } from "./parser/ubershape.ts";
+import { parse as parseSubshape } from "./parser/subshape.ts";
 import {
-  validateSubshape,
+  SubshapeFieldSelectorReferenceError,
   SubshapeOrphanSelectError,
   SubshapeSelectReferenceError,
   SubshapeSelectRequiredError,
-  SubshapeFieldSelectorReferenceError,
   SubshapeTypeSelectorReferenceError,
   SubshapeValueSelectorReferenceError,
-} from './subshape';
+  validateSubshape,
+} from "./subshape.ts";
 
 const ubershapeSample = `
   root
@@ -30,7 +31,7 @@ const ubershapeSample = `
   }
 `;
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
@@ -43,11 +44,11 @@ test('validate', () => {
         | #bar-a
     `,
     SubshapeOrphanSelectError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
@@ -58,22 +59,22 @@ test('validate', () => {
         | foo-a
     `,
     SubshapeSelectReferenceError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
       use 'ubershape sample'
     `,
     SubshapeSelectRequiredError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
@@ -83,11 +84,11 @@ test('validate', () => {
       }
     `,
     SubshapeFieldSelectorReferenceError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
@@ -96,11 +97,11 @@ test('validate', () => {
         > fooooo
     `,
     SubshapeTypeSelectorReferenceError,
-    1
+    1,
   );
 });
 
-test('validate', () => {
+Deno.test("validate", () => {
   expectError(
     ubershapeSample,
     `
@@ -111,28 +112,28 @@ test('validate', () => {
         | #bar-c
     `,
     SubshapeValueSelectorReferenceError,
-    1
+    1,
   );
 });
 
 function getValidationErrors(
   ubershapeCode: string,
-  subshapeCode: string
+  subshapeCode: string,
 ) {
   const parseUbershapeResult = parseUbershape(ubershapeCode);
   const parseSubshapeResult = parseSubshape(subshapeCode);
   return validateSubshape(parseUbershapeResult.ast, parseSubshapeResult.ast);
 }
 
-type ErrorClass = { new(...args: any[]): Error };
+type ErrorClass = { new (...args: any[]): Error };
 
 function expectError(
   ubershapeCode: string,
   subshapeCode: string,
   Error: ErrorClass,
-  count: number
+  count: number,
 ) {
   const errors = getValidationErrors(ubershapeCode, subshapeCode);
-  const actualCount = errors.filter(err => err instanceof Error).length;
-  expect(actualCount).toBe(count);
+  const actualCount = errors.filter((err) => err instanceof Error).length;
+  assertEquals(actualCount, count);
 }
